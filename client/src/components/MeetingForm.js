@@ -12,8 +12,7 @@ import {
   Typography,
   Row,
   Col,
-  Upload,
-  Image
+  Upload
 } from 'antd';
 import { 
   SaveOutlined, 
@@ -23,8 +22,7 @@ import {
   TeamOutlined,
   FileTextOutlined,
   PlusOutlined,
-  UploadOutlined,
-  PictureOutlined
+  UploadOutlined
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
@@ -51,7 +49,7 @@ const MeetingForm = () => {
     if (isEdit) {
       fetchMeetingData();
     }
-  }, [id]);
+  }, [id, isEdit, fetchMeetingData]); 
 
   const fetchCommunities = async () => {
     try {

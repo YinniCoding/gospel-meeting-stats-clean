@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout, ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
@@ -15,11 +15,6 @@ import './App.css';
 
 const { Content } = Layout;
 
-// 受保护的路由组件
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
-};
 
 // 主应用组件
 const AppContent = () => {

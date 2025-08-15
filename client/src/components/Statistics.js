@@ -50,7 +50,7 @@ const Statistics = () => {
   useEffect(() => {
     fetchCommunities();
     fetchStatistics();
-  }, []);
+  }, [fetchCommunities, fetchStatistics]);
 
   const fetchCommunities = async () => {
     try {
@@ -116,10 +116,6 @@ const Statistics = () => {
     value: item.meetings
   }));
 
-  const lineData = chartData.map(item => ({
-    name: item.name,
-    participants: item.participants
-  }));
 
   const colors = ['#1890ff', '#52c41a', '#722ed1', '#fa8c16', '#eb2f96', '#13c2c2', '#f5222d', '#fa541c'];
 

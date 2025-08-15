@@ -5,9 +5,7 @@ import {
   Button, 
   Card, 
   message, 
-  Space, 
   Typography, 
-  Divider,
   Alert,
   Row,
   Col
@@ -26,7 +24,7 @@ const { Title, Text } = Typography;
 const { Password } = Input;
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [form] = Form.useForm();
   const [passwordForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -35,7 +33,7 @@ const Profile = () => {
 
   useEffect(() => {
     fetchUserInfo();
-  }, []);
+  }, [fetchUserInfo]); 
 
   const fetchUserInfo = async () => {
     try {
