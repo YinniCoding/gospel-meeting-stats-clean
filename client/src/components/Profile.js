@@ -33,7 +33,7 @@ const Profile = () => {
 
   useEffect(() => {
     fetchUserInfo();
-  }, [fetchUserInfo]); 
+  }); 
 
   const fetchUserInfo = async () => {
     try {

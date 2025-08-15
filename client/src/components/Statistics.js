@@ -50,7 +50,7 @@ const Statistics = () => {
   useEffect(() => {
     fetchCommunities();
     fetchStatistics();
-  }, [fetchCommunities, fetchStatistics]);
+  });
 
   const fetchCommunities = async () => {
     try {

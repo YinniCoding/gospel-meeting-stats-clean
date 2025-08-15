@@ -49,7 +49,7 @@ const MeetingForm = () => {
     if (isEdit) {
       fetchMeetingData();
     }
-  }, [id, isEdit, fetchMeetingData]); 
+  }, [id]); 
 
   const fetchCommunities = async () => {
     try {
