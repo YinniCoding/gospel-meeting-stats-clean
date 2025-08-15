@@ -44,12 +44,6 @@ const MeetingForm = () => {
 
   const isEdit = !!id;
 
-  useEffect(() => {
-    fetchCommunities();
-    if (isEdit) {
-      fetchMeetingData();
-    }
-  }, [id, isEdit, fetchCommunities, fetchMeetingData]);
 
   const fetchCommunities = async () => {
     try {
@@ -84,6 +78,13 @@ const MeetingForm = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCommunities();
+    if (isEdit) {
+      fetchMeetingData();
+    }
+  }, [id, isEdit, fetchCommunities, fetchMeetingData]);
 
   const onFinish = async (values) => {
     try {
