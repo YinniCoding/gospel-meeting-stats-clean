@@ -44,8 +44,8 @@ const MeetingForm = () => {
 
   const isEdit = !!id;
 
-
-  const fetchCommunities = async () => {
+  // ✅ useCallback to make function stable for useEffect
+  const fetchCommunities = useCallback(async () => {
     try {
       const response = await api.get('/api/communities');
       setCommunities(response.data);
@@ -53,21 +53,20 @@ const MeetingForm = () => {
       console.error('获取小区列表失败:', error);
       message.error('获取小区列表失败');
     }
-  };
+  }, []);
 
-  const fetchMeetingData = async () => {
+  const fetchMeetingData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.get(`/api/meetings/${id}`);
       const meeting = response.data;
-      
-      // 转换日期格式
+
       const formData = {
         ...meeting,
         meeting_date: dayjs(meeting.meeting_date),
         community_id: meeting.community_id
       };
-      
+
       setInitialValues(formData);
       form.setFieldsValue(formData);
     } catch (error) {
@@ -77,14 +76,14 @@ const MeetingForm = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [form, id, navigate]);
 
   useEffect(() => {
     fetchCommunities();
     if (isEdit) {
       fetchMeetingData();
     }
-  }, [id, isEdit]);
+  }, [id, isEdit, fetchCommunities, fetchMeetingData]);
 
   const onFinish = async (values) => {
     try {
