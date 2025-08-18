@@ -233,6 +233,20 @@ app.post('/api/communities', authenticateToken, (req, res) => {
     });
 });
 
+// 删除小区/街道
+app.delete('/api/communities/:id', authenticateToken, (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM communities WHERE id = ?', [id], function(err) {
+    if (err) {
+      return res.status(500).json({ error: '数据库错误' });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: '小区/街道不存在' });
+    }
+    res.json({ message: '小区/街道删除成功' });
+  });
+});
+
 // 获取聚会记录列表
 app.get('/api/meetings', authenticateToken, (req, res) => {
   const { community_id, start_date, end_date, page = 1, limit = 20 } = req.query;

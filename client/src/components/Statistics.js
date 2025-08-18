@@ -49,8 +49,11 @@ const Statistics = () => {
 
   useEffect(() => {
     fetchCommunities();
+  }, []);
+
+  useEffect(() => {
     fetchStatistics();
-  });
+  }, [dateRange, selectedCommunity]);
 
   const fetchCommunities = async () => {
     try {
