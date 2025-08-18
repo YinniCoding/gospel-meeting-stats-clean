@@ -60,11 +60,11 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/build')));
 
 // 限流中间件
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15分钟
-  max: 100 // 限制每个IP 15分钟内最多100个请求
-});
-app.use('/api/', limiter);
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15分钟
+//   max: 100 // 限制每个IP 15分钟内最多100个请求
+// });
+// app.use('/api/', limiter);
 
 // 数据库初始化
 const db = new sqlite3.Database('./database.sqlite', (err) => {
