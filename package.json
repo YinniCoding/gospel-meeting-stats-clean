@@ -1,7 +1,7 @@
 {
   "name": "gospel-meeting-stats",
   "version": "1.0.0",
-  "description": "江苏省张家港市福音聚会参与情况统计网站",
+  "description": "本地社区活动参与情况统计网站",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

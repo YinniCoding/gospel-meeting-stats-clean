@@ -30,7 +30,7 @@ git commit -m "准备部署到 Vercel"
 ### 步骤 3：配置项目
 在项目配置页面，设置以下参数：
 
-**Project Name**: `gospel-meeting-stats`（或您喜欢的名称）
+**Project Name**: `activity-stats`（或您喜欢的名称）
 
 **Framework Preset**: 选择 "Other"
 

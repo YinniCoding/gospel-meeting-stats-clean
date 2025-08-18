@@ -59,7 +59,7 @@ const Dashboard = () => {
       icon: <PlusOutlined />,
       color: '#1890ff',
       onClick: () => navigate('/meetings/add'),
-      description: '记录新的福音聚会'
+      description: '记录新的社区活动'
     },
     {
       title: '查看统计',
@@ -96,9 +96,9 @@ const Dashboard = () => {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <Title level={2}>欢迎使用福音聚会统计系统</Title>
+        <Title level={2}>欢迎使用活动统计系统</Title>
         <Text type="secondary">
-          江苏省张家港市福音聚会参与情况统计管理平台
+          本地社区活动参与情况统计管理平台
         </Text>
       </div>
 

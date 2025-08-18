@@ -31,10 +31,10 @@ const Login = () => {
       <Card className="login-card">
         <div className="login-header">
           <Title level={2} className="login-title">
-            福音聚会统计系统
+            活动统计系统
           </Title>
           <Text className="login-subtitle">
-            江苏省张家港市福音聚会参与情况统计
+            本地社区活动参与情况统计
           </Text>
         </div>
         

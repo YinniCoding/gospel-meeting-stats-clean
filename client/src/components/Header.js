@@ -99,7 +99,7 @@ const Header = () => {
         />
         
         <div style={{ color: 'white', fontSize: '18px', fontWeight: 'bold' }}>
-          福音聚会统计系统
+          活动统计系统
         </div>
       </div>
 
