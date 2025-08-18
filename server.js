@@ -10,6 +10,7 @@ const multer = require('multer');
 const fs = require('fs');
 
 const app = express();
+app.set('trust proxy', true);
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
