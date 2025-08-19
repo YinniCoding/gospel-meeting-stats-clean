@@ -41,6 +41,7 @@ const MeetingForm = () => {
   const [initialValues, setInitialValues] = useState({});
   const [fileList, setFileList] = useState([]);
   const [imageList, setImageList] = useState([]);
+  const [selectedProject, setSelectedProject] = useState();
 
   const isEdit = !!id;
 
@@ -77,6 +78,10 @@ const MeetingForm = () => {
 
       setInitialValues(formData);
       form.setFieldsValue(formData);
+      if (meeting.project) {
+        form.setFieldsValue({ project: meeting.project });
+        setSelectedProject(meeting.project);
+      }
     } catch (error) {
       console.error('获取聚会记录失败:', error);
       message.error('获取聚会记录失败');
@@ -98,10 +103,11 @@ const MeetingForm = () => {
       setLoading(true);
       
       const formData = new FormData();
+      formData.append('project', values.project);
       formData.append('community_id', values.community_id);
       formData.append('meeting_date', values.meeting_date.format('YYYY-MM-DD'));
       formData.append('meeting_time', values.meeting_time);
-      formData.append('location', values.location);
+      formData.append('location', values.location || '');
       formData.append('participants_count', values.participants_count || 0);
       formData.append('notes', values.notes || '');
 
@@ -170,6 +176,27 @@ const MeetingForm = () => {
           <Row gutter={[24, 0]}>
             <Col xs={24} md={12}>
               <Form.Item
+                name="project"
+                label="项目"
+                rules={[{ required: true, message: '请选择项目！' }]}
+              >
+                <Select
+                  placeholder="选择项目（1~10）"
+                  onChange={(value) => {
+                    setSelectedProject(value);
+                    form.setFieldsValue({ community_id: undefined });
+                  }}
+                >
+                  {Array.from({ length: 10 }, (_, i) => `${i + 1}`).map(p => (
+                    <Option key={p} value={p}>{p}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={[24, 0]}>
+            <Col xs={24} md={12}>
+              <Form.Item
                 name="community_id"
                 label="组/排/小区/大区/召会"
                 rules={[{ required: true, message: '请选择组/排/小区/大区/召会！' }]}
@@ -179,12 +206,15 @@ const MeetingForm = () => {
                   showSearch
                   optionFilterProp="children"
                   suffixIcon={<TeamOutlined />}
+                  disabled={!selectedProject}
                 >
-                  {communities.map(community => (
-                    <Option key={community.id} value={community.id}>
-                      {community.name}（{typeLabels[community.type]}，项目：{community.project}）
-                    </Option>
-                  ))}
+                  {communities
+                    .filter(community => !selectedProject || community.project === selectedProject)
+                    .map(community => (
+                      <Option key={community.id} value={community.id}>
+                        {community.name}（{typeLabels[community.type]}，项目：{community.project}）
+                      </Option>
+                    ))}
                 </Select>
               </Form.Item>
             </Col>
@@ -251,7 +281,7 @@ const MeetingForm = () => {
               <Form.Item
                 name="location"
                 label="聚会地点"
-                rules={[{ required: true, message: '请输入聚会地点！' }]}
+                rules={[]}
               >
                 <Input
                   placeholder="输入聚会地点"

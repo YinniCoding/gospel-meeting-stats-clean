@@ -69,11 +69,11 @@ const Dashboard = () => {
       description: '查看详细统计数据'
     },
     {
-      title: '管理小区',
+      title: '项目管理',
       icon: <TeamOutlined />,
       color: '#722ed1',
       onClick: () => navigate('/communities'),
-      description: '管理小区和街道信息'
+      description: '管理项目/类型/名称'
     },
     {
       title: '聚会列表',

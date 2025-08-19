@@ -71,7 +71,7 @@ const CommunityManagement = () => {
     form.setFieldsValue({
       name: community.name,
       type: community.type,
-      district: community.district
+      project: community.project
     });
     setModalVisible(true);
   };
@@ -189,7 +189,7 @@ const CommunityManagement = () => {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <Title level={2}>小区/街道管理</Title>
+        <Title level={2}>项目管理</Title>
       </div>
 
       {/* 操作按钮 */}
@@ -200,7 +200,7 @@ const CommunityManagement = () => {
             icon={<PlusOutlined />}
             onClick={showAddModal}
           >
-            添加小区/街道
+            添加项目
           </Button>
           <Button
             icon={<ReloadOutlined />}
@@ -233,7 +233,7 @@ const CommunityManagement = () => {
 
       {/* 添加/编辑模态框 */}
       <Modal
-        title={editingCommunity ? '编辑记录' : '添加记录'}
+        title={editingCommunity ? '编辑项目' : '添加项目'}
         open={modalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
@@ -250,16 +250,13 @@ const CommunityManagement = () => {
           <Form.Item
             name="project"
             label="项目"
-            rules={[{ required: true, message: '请输入项目！' }, { max: 100, message: '项目名称不能超过100个字符！' }]}
+            rules={[{ required: true, message: '请选择项目！' }]}
           >
-            <Input placeholder="输入项目名称（如：1、2、3...）" maxLength={100} showCount />
-          </Form.Item>
-          <Form.Item
-            name="name"
-            label="名称"
-            rules={[{ required: true, message: '请输入名称！' }, { max: 100, message: '名称不能超过100个字符！' }]}
-          >
-            <Input placeholder="输入组/排/小区/大区/召会名称" maxLength={100} showCount />
+            <Select placeholder="选择项目（1~10）">
+              {Array.from({ length: 10 }, (_, i) => `${i + 1}`).map(p => (
+                <Option key={p} value={p}>{p}</Option>
+              ))}
+            </Select>
           </Form.Item>
           <Form.Item
             name="type"
@@ -273,6 +270,13 @@ const CommunityManagement = () => {
               <Option value="region">大区</Option>
               <Option value="church">召会</Option>
             </Select>
+          </Form.Item>
+          <Form.Item
+            name="name"
+            label="名称"
+            rules={[{ required: true, message: '请输入名称！' }, { max: 100, message: '名称不能超过100个字符！' }]}
+          >
+            <Input placeholder="输入组/排/小区/大区/召会名称" maxLength={100} showCount />
           </Form.Item>
         </Form>
       </Modal>

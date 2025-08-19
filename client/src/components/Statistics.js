@@ -108,7 +108,7 @@ const Statistics = () => {
     const rows = statistics.map(item => [
       item.project,
       item.community_name,
-      item.community_type === 'street' ? '街道' : '小区',
+      typeLabels[item.community_type],
       item.meeting_count || 0,
       item.total_participants || 0,
       Math.round(item.avg_participants || 0)

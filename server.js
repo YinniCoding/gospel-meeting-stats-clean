@@ -58,6 +58,8 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/build')));
+// 提供上传文件的静态访问
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 限流中间件
 // const limiter = rateLimit({
@@ -239,13 +241,44 @@ app.delete('/api/communities/:id', authenticateToken, (req, res) => {
   });
 });
 
+// 更新组/排/小区/大区/召会
+app.put('/api/communities/:id', authenticateToken, (req, res) => {
+  const { id } = req.params;
+  const { name, type, project } = req.body;
+
+  if (!name || !type || !project) {
+    return res.status(400).json({ error: '所有字段都是必填的' });
+  }
+
+  const allowedTypes = ['group','pai','community','region','church'];
+  if (!allowedTypes.includes(type)) {
+    return res.status(400).json({ error: '类型不合法' });
+  }
+
+  db.run(`
+    UPDATE communities
+    SET name = ?, type = ?, project = ?
+    WHERE id = ?
+  `, [name, type, project, id], function(err) {
+    if (err) {
+      return res.status(500).json({ error: '数据库错误' });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: '记录不存在' });
+    }
+    res.json({ message: '更新成功' });
+  });
+});
+
 // 获取聚会记录列表
 app.get('/api/meetings', authenticateToken, (req, res) => {
-  const { community_id, start_date, end_date, page = 1, limit = 20 } = req.query;
+  const { community_id, start_date, end_date, location } = req.query;
+  const page = parseInt(req.query.page || '1', 10);
+  const limit = parseInt(req.query.limit || '20', 10);
   const offset = (page - 1) * limit;
 
   let query = `
-    SELECT m.*, c.name as community_name, c.type as community_type, a.name as created_by_name
+    SELECT m.*, c.name as community_name, c.type as community_type, c.project as project, a.name as created_by_name
     FROM meetings m
     JOIN communities c ON m.community_id = c.id
     JOIN admins a ON m.created_by = a.id
@@ -267,6 +300,11 @@ app.get('/api/meetings', authenticateToken, (req, res) => {
   if (end_date) {
     whereConditions.push('m.meeting_date <= ?');
     params.push(end_date);
+  }
+
+  if (location) {
+    whereConditions.push('m.location LIKE ?');
+    params.push(`%${location}%`);
   }
 
   if (whereConditions.length > 0) {
@@ -299,13 +337,39 @@ app.get('/api/meetings', authenticateToken, (req, res) => {
       res.json({
         meetings: rows,
         pagination: {
-          current_page: parseInt(page),
+          current_page: page,
           total_pages: Math.ceil(countRow.total / limit),
           total_records: countRow.total,
-          limit: parseInt(limit)
+          limit: limit
         }
       });
     });
+  });
+});
+
+// 获取单条聚会记录详情
+app.get('/api/meetings/:id', authenticateToken, (req, res) => {
+  const { id } = req.params;
+  const query = `
+    SELECT 
+      m.*, 
+      c.name as community_name, 
+      c.type as community_type,
+      c.project as project,
+      a.name as created_by_name
+    FROM meetings m
+    JOIN communities c ON m.community_id = c.id
+    JOIN admins a ON m.created_by = a.id
+    WHERE m.id = ?
+  `;
+  db.get(query, [id], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: '数据库错误' });
+    }
+    if (!row) {
+      return res.status(404).json({ error: '聚会记录不存在' });
+    }
+    res.json(row);
   });
 });
 
@@ -316,14 +380,14 @@ app.post('/api/meetings', authenticateToken, upload.fields([
 ]), (req, res) => {
   const { community_id, meeting_date, meeting_time, location, participants_count, notes } = req.body;
 
-  if (!community_id || !meeting_date || !meeting_time || !location) {
+  if (!community_id || !meeting_date || !meeting_time) {
     return res.status(400).json({ error: '必填字段不能为空' });
   }
 
   db.run(`
     INSERT INTO meetings (community_id, meeting_date, meeting_time, location, participants_count, notes, created_by)
     VALUES (?, ?, ?, ?, ?, ?, ?)
-  `, [community_id, meeting_date, meeting_time, location, participants_count || 0, notes, req.user.id],
+  `, [community_id, meeting_date, meeting_time, (location || ''), participants_count || 0, notes, req.user.id],
   function(err) {
     if (err) {
       return res.status(500).json({ error: '数据库错误' });
@@ -370,12 +434,17 @@ app.post('/api/meetings', authenticateToken, upload.fields([
   });
 });
 
-// 更新聚会记录
-app.put('/api/meetings/:id', authenticateToken, (req, res) => {
+// 更新聚会记录（支持附件）
+app.put('/api/meetings/:id', authenticateToken, upload.fields([
+  { name: 'images', maxCount: 5 },
+  { name: 'files', maxCount: 10 }
+]), (req, res) => {
   const { id } = req.params;
-  const { community_id, meeting_date, meeting_time, location, participants_count, notes } = req.body;
+  const { community_id, meeting_date, meeting_time, location } = req.body;
+  const participants_count = req.body.participants_count ? parseInt(req.body.participants_count, 10) : 0;
+  const notes = req.body.notes || '';
 
-  if (!community_id || !meeting_date || !meeting_time || !location) {
+  if (!community_id || !meeting_date || !meeting_time) {
     return res.status(400).json({ error: '必填字段不能为空' });
   }
 
@@ -384,7 +453,7 @@ app.put('/api/meetings/:id', authenticateToken, (req, res) => {
     SET community_id = ?, meeting_date = ?, meeting_time = ?, location = ?, 
         participants_count = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `, [community_id, meeting_date, meeting_time, location, participants_count || 0, notes, id],
+  `, [community_id, meeting_date, meeting_time, (location || ''), participants_count || 0, notes, id],
   function(err) {
     if (err) {
       return res.status(500).json({ error: '数据库错误' });
@@ -392,6 +461,39 @@ app.put('/api/meetings/:id', authenticateToken, (req, res) => {
     if (this.changes === 0) {
       return res.status(404).json({ error: '聚会记录不存在' });
     }
+
+    // 追加新上传的文件到 meeting_files
+    if (req.files && (req.files.images || req.files.files)) {
+      db.run(`CREATE TABLE IF NOT EXISTS meeting_files (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        meeting_id INTEGER NOT NULL,
+        filename TEXT NOT NULL,
+        type TEXT NOT NULL,
+        original_name TEXT NOT NULL,
+        file_size INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (meeting_id) REFERENCES meetings (id)
+      )`);
+
+      const fileRecords = [];
+      if (req.files.images) {
+        req.files.images.forEach(file => {
+          fileRecords.push([id, file.filename, 'image', file.originalname, file.size]);
+        });
+      }
+      if (req.files.files) {
+        req.files.files.forEach(file => {
+          fileRecords.push([id, file.filename, 'file', file.originalname, file.size]);
+        });
+      }
+
+      if (fileRecords.length > 0) {
+        const placeholders = fileRecords.map(() => '(?, ?, ?, ?, ?)').join(',');
+        const values = fileRecords.flat();
+        db.run(`INSERT INTO meeting_files (meeting_id, filename, type, original_name, file_size) VALUES ${placeholders}`, values);
+      }
+    }
+
     res.json({ message: '聚会记录更新成功' });
   });
 });
@@ -425,6 +527,7 @@ app.get('/api/statistics', authenticateToken, (req, res) => {
 
   const query = `
     SELECT 
+      c.project as project,
       c.name as community_name,
       c.type as community_type,
       COUNT(m.id) as meeting_count,
@@ -432,7 +535,7 @@ app.get('/api/statistics', authenticateToken, (req, res) => {
       AVG(m.participants_count) as avg_participants
     FROM communities c
     LEFT JOIN meetings m ON c.id = m.community_id ${dateFilter ? 'AND ' + dateFilter.replace('WHERE', '') : ''}
-    GROUP BY c.id, c.name, c.type
+    GROUP BY c.id, c.project, c.name, c.type
     ORDER BY c.name
   `;
 

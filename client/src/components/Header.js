@@ -40,7 +40,7 @@ const Header = () => {
     {
       key: '/communities',
       icon: <TeamOutlined />,
-      label: '小区管理',
+      label: '项目管理',
     },
   ];
 
