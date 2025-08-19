@@ -99,6 +99,22 @@ function initDatabase() {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
+  // 迁移：为已存在的 communities 表补充缺失的 project 列
+  db.all("PRAGMA table_info(communities)", (err, columns) => {
+    if (!err && Array.isArray(columns)) {
+      const hasProject = columns.some(col => col.name === 'project');
+      if (!hasProject) {
+        db.run("ALTER TABLE communities ADD COLUMN project TEXT NOT NULL DEFAULT '1'", alterErr => {
+          if (alterErr) {
+            console.error('为 communities 添加 project 列失败:', alterErr.message);
+          } else {
+            console.log("已为 communities 表添加缺失的 'project' 列，默认值为 '1'");
+          }
+        });
+      }
+    }
+  });
+
   // 聚会记录表
   db.run(`CREATE TABLE IF NOT EXISTS meetings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
