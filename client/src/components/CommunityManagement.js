@@ -23,7 +23,6 @@ import {
 import api from '../services/api';
 
 const { Title } = Typography;
-const { Option } = Select;
 
 // 类型映射
 const typeLabels = {
