@@ -173,6 +173,7 @@ const MeetingForm = () => {
           initialValues={initialValues}
           disabled={loading}
         >
+          {/* 第1行：项目 + 组/排/小区/大区/召会 */}
           <Row gutter={[24, 0]}>
             <Col xs={24} md={12}>
               <Form.Item
@@ -193,8 +194,6 @@ const MeetingForm = () => {
                 </Select>
               </Form.Item>
             </Col>
-          </Row>
-          <Row gutter={[24, 0]}>
             <Col xs={24} md={12}>
               <Form.Item
                 name="community_id"
@@ -206,20 +205,20 @@ const MeetingForm = () => {
                   showSearch
                   optionFilterProp="children"
                   suffixIcon={<TeamOutlined />}
-                  disabled={!selectedProject}
                 >
-                  {communities
-                    .filter(community => !selectedProject || community.project === selectedProject)
-                    .map(community => (
-                      <Option key={community.id} value={community.id}>
-                        {community.name}（{typeLabels[community.type]}，项目：{community.project}）
-                      </Option>
-                    ))}
+                  {communities.map(community => (
+                    <Option key={community.id} value={community.id}>
+                      {community.name}（{typeLabels[community.type]}，项目：{community.project}）
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>
-            
-            <Col xs={24} md={12}>
+          </Row>
+
+          {/* 第2行：日期 + 时间 + 人数 */}
+          <Row gutter={[24, 0]}>
+            <Col xs={24} md={8}>
               <Form.Item
                 name="meeting_date"
                 label="聚会日期"
@@ -233,10 +232,7 @@ const MeetingForm = () => {
                 />
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={[24, 0]}>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={8}>
               <Form.Item
                 name="meeting_time"
                 label="聚会时间"
@@ -255,8 +251,7 @@ const MeetingForm = () => {
                 </Select>
               </Form.Item>
             </Col>
-            
-            <Col xs={24} md={12}>
+            <Col xs={24} md={8}>
               <Form.Item
                 name="participants_count"
                 label="参与人数"

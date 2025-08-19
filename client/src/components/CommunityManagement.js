@@ -5,11 +5,9 @@ import {
   Button, 
   Form, 
   Input, 
-  Select, 
   Modal, 
   message, 
   Space, 
-  Tag,
   Typography,
   Popconfirm,
   Tooltip
@@ -42,6 +40,7 @@ const CommunityManagement = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingCommunity, setEditingCommunity] = useState(null);
   const [form] = Form.useForm();
+  const [projectValue, setProjectValue] = useState('');
 
   useEffect(() => {
     fetchCommunities();
@@ -70,23 +69,29 @@ const CommunityManagement = () => {
     setEditingCommunity(community);
     form.setFieldsValue({
       name: community.name,
-      type: community.type,
       project: community.project
     });
+    setProjectValue(community.project || '');
     setModalVisible(true);
   };
 
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
+      const payload = {
+        name: values.name,
+        project: values.project,
+        // 后端需要 type 字段，页面不展示，固定为 'community'
+        type: editingCommunity?.type || 'community'
+      };
       
       if (editingCommunity) {
         // 编辑模式
-        await api.put(`/api/communities/${editingCommunity.id}`, values);
+        await api.put(`/api/communities/${editingCommunity.id}`, payload);
         message.success('小区信息更新成功');
       } else {
         // 添加模式
-        await api.post('/api/communities', values);
+        await api.post('/api/communities', payload);
         message.success('小区添加成功');
       }
       
@@ -137,16 +142,9 @@ const CommunityManagement = () => {
             <TeamOutlined style={{ marginRight: 8, color: '#1890ff' }} />
             {text}
           </div>
-          <Tag color="#1890ff">{typeLabels[record.type]}</Tag>
+          {/* 隐藏类型标签 */}
         </div>
       )
-    },
-    {
-      title: '类型',
-      dataIndex: 'type',
-      key: 'type',
-      width: 100,
-      render: (type) => <Tag color="#1890ff">{typeLabels[type]}</Tag>
     },
     {
       title: '创建时间',
@@ -250,33 +248,19 @@ const CommunityManagement = () => {
           <Form.Item
             name="project"
             label="项目"
-            rules={[{ required: true, message: '请选择项目！' }]}
+            rules={[{ required: true, message: '请输入项目！' }]}
           >
-            <Select placeholder="选择项目（1~10）">
-              {Array.from({ length: 10 }, (_, i) => `${i + 1}`).map(p => (
-                <Option key={p} value={p}>{p}</Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            name="type"
-            label="类型"
-            rules={[{ required: true, message: '请选择类型！' }]}
-          >
-            <Select placeholder="选择类型">
-              <Option value="group">组</Option>
-              <Option value="pai">排</Option>
-              <Option value="community">小区</Option>
-              <Option value="region">大区</Option>
-              <Option value="church">召会</Option>
-            </Select>
+            <Input 
+              placeholder="输入项目（如：1、2、3...或名称）"
+              onChange={(e) => setProjectValue(e.target.value)}
+            />
           </Form.Item>
           <Form.Item
             name="name"
             label="名称"
             rules={[{ required: true, message: '请输入名称！' }, { max: 100, message: '名称不能超过100个字符！' }]}
           >
-            <Input placeholder="输入组/排/小区/大区/召会名称" maxLength={100} showCount />
+            <Input placeholder={projectValue || '输入名称'} maxLength={100} showCount />
           </Form.Item>
         </Form>
       </Modal>

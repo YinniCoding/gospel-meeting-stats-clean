@@ -560,7 +560,7 @@ app.delete('/api/meetings/:id', authenticateToken, (req, res) => {
 
 // 获取统计数据
 app.get('/api/statistics', authenticateToken, (req, res) => {
-  const { start_date, end_date } = req.query;
+  const { start_date, end_date, groupBy } = req.query;
 
   let dateFilter = '';
   let params = [];
@@ -570,21 +570,55 @@ app.get('/api/statistics', authenticateToken, (req, res) => {
     params = [start_date, end_date];
   }
 
-  const query = `
-    SELECT 
-      c.project as project,
-      c.name as community_name,
-      c.type as community_type,
-      COUNT(m.id) as meeting_count,
-      SUM(m.participants_count) as total_participants,
-      AVG(m.participants_count) as avg_participants
-    FROM communities c
-    LEFT JOIN meetings m ON c.id = m.community_id ${dateFilter ? 'AND ' + dateFilter.replace('WHERE', '') : ''}
-    GROUP BY c.id, c.project, c.name, c.type
-    ORDER BY c.name
-  `;
+  let query = '';
+  let queryParams = params;
 
-  db.all(query, params, (err, rows) => {
+  if (groupBy === 'project') {
+    query = `
+      SELECT 
+        c.project as project,
+        '' as community_name,
+        NULL as community_type,
+        COUNT(m.id) as meeting_count,
+        SUM(m.participants_count) as total_participants,
+        AVG(m.participants_count) as avg_participants
+      FROM communities c
+      LEFT JOIN meetings m ON c.id = m.community_id ${dateFilter ? 'AND ' + dateFilter.replace('WHERE', '') : ''}
+      GROUP BY c.project
+      ORDER BY c.project
+    `;
+  } else if (groupBy === 'project_unit') {
+    query = `
+      SELECT 
+        c.project as project,
+        c.name as community_name,
+        c.type as community_type,
+        COUNT(m.id) as meeting_count,
+        SUM(m.participants_count) as total_participants,
+        AVG(m.participants_count) as avg_participants
+      FROM communities c
+      LEFT JOIN meetings m ON c.id = m.community_id ${dateFilter ? 'AND ' + dateFilter.replace('WHERE', '') : ''}
+      GROUP BY c.project, c.id, c.name, c.type
+      ORDER BY c.project, c.name
+    `;
+  } else {
+    // 默认：按单位（组/排/小区/大区/召会）
+    query = `
+      SELECT 
+        c.project as project,
+        c.name as community_name,
+        c.type as community_type,
+        COUNT(m.id) as meeting_count,
+        SUM(m.participants_count) as total_participants,
+        AVG(m.participants_count) as avg_participants
+      FROM communities c
+      LEFT JOIN meetings m ON c.id = m.community_id ${dateFilter ? 'AND ' + dateFilter.replace('WHERE', '') : ''}
+      GROUP BY c.id, c.project, c.name, c.type
+      ORDER BY c.name
+    `;
+  }
+
+  db.all(query, queryParams, (err, rows) => {
     if (err) {
       return res.status(500).json({ error: '数据库错误' });
     }

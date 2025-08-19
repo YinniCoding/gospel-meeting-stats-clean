@@ -48,6 +48,7 @@ const Statistics = () => {
   const [dateRange, setDateRange] = useState([dayjs().subtract(30, 'day'), dayjs()]);
   const [selectedCommunity, setSelectedCommunity] = useState('all');
   const [communities, setCommunities] = useState([]);
+  const [groupBy, setGroupBy] = useState('project'); // project | unit | project_unit
 
   useEffect(() => {
     fetchCommunities();
@@ -55,7 +56,7 @@ const Statistics = () => {
 
   useEffect(() => {
     fetchStatistics();
-  }, [dateRange, selectedCommunity]);
+  }, [dateRange, selectedCommunity, groupBy]);
 
   const fetchCommunities = async () => {
     try {
@@ -75,7 +76,7 @@ const Statistics = () => {
         params.start_date = dateRange[0].format('YYYY-MM-DD');
         params.end_date = dateRange[1].format('YYYY-MM-DD');
       }
-
+      params.groupBy = groupBy;
       const response = await api.get('/api/statistics', { params });
       setStatistics(response.data);
     } catch (error) {
@@ -127,10 +128,16 @@ const Statistics = () => {
   };
 
   // 准备图表数据
+  const getName = (item) => {
+    if (groupBy === 'project') return `项目 ${item.project}`;
+    if (groupBy === 'project_unit') return `${item.project} - ${item.community_name}`;
+    return item.community_name;
+  };
+
   const chartData = statistics
     .filter(item => selectedCommunity === 'all' || item.community_name === selectedCommunity)
     .map(item => ({
-      name: item.community_name,
+      name: getName(item),
       meetings: item.meeting_count || 0,
       participants: item.total_participants || 0,
       avgParticipants: Math.round(item.avg_participants || 0)
@@ -228,6 +235,12 @@ const Statistics = () => {
             format="YYYY-MM-DD"
             placeholder={['开始日期', '结束日期']}
           />
+          <span>统计维度：</span>
+          <Select value={groupBy} onChange={setGroupBy} style={{ width: 220 }}>
+            <Option value="project">按项目</Option>
+            <Option value="unit">按组/排/小区/大区/召会</Option>
+            <Option value="project_unit">按 项目+组/排/小区/大区/召会</Option>
+          </Select>
           <span>组/排/小区/大区/召会：</span>
           <Select
             value={selectedCommunity}
