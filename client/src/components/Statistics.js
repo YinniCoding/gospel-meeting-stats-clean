@@ -10,7 +10,8 @@ import {
   Statistic, 
   Spin,
   Space,
-  Select
+  Select,
+  message
 } from 'antd';
 import { 
   BarChart, 
@@ -35,6 +36,7 @@ import {
 } from '@ant-design/icons';
 import api from '../services/api';
 import dayjs from 'dayjs';
+import { saveAs } from 'file-saver';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -93,6 +95,26 @@ const Statistics = () => {
 
   const handleRefresh = () => {
     fetchStatistics();
+  };
+
+  const exportToCSV = () => {
+    if (!statistics.length) {
+      message.warning('暂无数据可导出');
+      return;
+    }
+    const headers = [
+      '小区/街道', '类型', '聚会次数', '总参与人数', '平均参与人数'
+    ];
+    const rows = statistics.map(item => [
+      item.community_name,
+      item.community_type === 'street' ? '街道' : '小区',
+      item.meeting_count || 0,
+      item.total_participants || 0,
+      Math.round(item.avg_participants || 0)
+    ]);
+    const csvContent = [headers, ...rows].map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, `statistics_${dayjs().format('YYYYMMDD_HHmmss')}.csv`);
   };
 
   // 计算总体统计数据
@@ -213,6 +235,9 @@ const Statistics = () => {
             onClick={handleRefresh}
           >
             刷新数据
+          </Button>
+          <Button onClick={exportToCSV}>
+            导出CSV
           </Button>
         </Space>
       </Card>

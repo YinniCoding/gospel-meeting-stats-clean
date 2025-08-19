@@ -80,11 +80,6 @@ const Login = () => {
           </Form.Item>
         </Form>
 
-        <div style={{ textAlign: 'center', marginTop: 16 }}>
-          <Text type="secondary">
-            默认账户：admin / admin123
-          </Text>
-        </div>
       </Card>
     </div>
   );

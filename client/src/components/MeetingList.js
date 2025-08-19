@@ -25,6 +25,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import dayjs from 'dayjs';
+import { saveAs } from 'file-saver';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -124,6 +125,30 @@ const MeetingList = () => {
       console.error('删除失败:', error);
       message.error('删除失败');
     }
+  };
+
+  const exportToCSV = () => {
+    if (!meetings.length) {
+      message.warning('暂无数据可导出');
+      return;
+    }
+    const headers = [
+      '小区/街道', '类型', '聚会日期', '聚会时间', '地点', '参与人数', '备注', '创建人', '创建时间'
+    ];
+    const rows = meetings.map(item => [
+      item.community_name,
+      item.community_type === 'street' ? '街道' : '小区',
+      dayjs(item.meeting_date).format('YYYY-MM-DD'),
+      item.meeting_time,
+      item.location,
+      item.participants_count,
+      item.notes || '',
+      item.created_by_name,
+      dayjs(item.created_at).format('YYYY-MM-DD HH:mm')
+    ]);
+    const csvContent = [headers, ...rows].map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, `meetings_${dayjs().format('YYYYMMDD_HHmmss')}.csv`);
   };
 
   const columns = [
@@ -295,6 +320,11 @@ const MeetingList = () => {
             onClick={() => fetchMeetings(pagination.current, pagination.pageSize, searchForm.getFieldsValue())}
           >
             刷新
+          </Button>
+          <Button
+            onClick={exportToCSV}
+          >
+            导出CSV
           </Button>
         </Space>
       </Card>
