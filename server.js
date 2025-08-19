@@ -10,6 +10,8 @@ const multer = require('multer');
 const fs = require('fs');
 
 const app = express();
+// 兼容旧库：是否存在 communities.district 非空列
+let COMMUNITIES_HAS_DISTRICT = false;
 app.set('trust proxy', true);
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -102,6 +104,7 @@ function initDatabase() {
 
     // 迁移：为已存在的 communities 表补充缺失的 project 列，然后再进行后续操作
     db.all("PRAGMA table_info(communities)", (err, columns) => {
+      let hasDistrict = false;
       const proceed = () => {
         // 聚会记录表
         db.run(`CREATE TABLE IF NOT EXISTS meetings (
@@ -133,9 +136,15 @@ function initDatabase() {
         db.get("SELECT COUNT(*) as count FROM communities", (err3, row2) => {
           if (row2 && row2.count === 0) {
             for (let i = 1; i <= 10; i++) {
-              db.run(`INSERT INTO communities (name, type, project) VALUES (?, ?, ?)`, [
-                `示例${i}组`, 'group', `${i}`
-              ]);
+              if (hasDistrict) {
+                db.run(`INSERT INTO communities (name, type, project, district) VALUES (?, ?, ?, ?)`, [
+                  `示例${i}组`, 'group', `${i}`, ''
+                ]);
+              } else {
+                db.run(`INSERT INTO communities (name, type, project) VALUES (?, ?, ?)`, [
+                  `示例${i}组`, 'group', `${i}`
+                ]);
+              }
             }
             console.log('已插入10个示例组，项目名为1~10');
           }
@@ -143,6 +152,8 @@ function initDatabase() {
       };
 
       if (!err && Array.isArray(columns)) {
+        hasDistrict = columns.some(col => col.name === 'district');
+        COMMUNITIES_HAS_DISTRICT = hasDistrict;
         const hasProject = columns.some(col => col.name === 'project');
         if (!hasProject) {
           db.run("ALTER TABLE communities ADD COLUMN project TEXT NOT NULL DEFAULT '1'", alterErr => {
@@ -243,8 +254,14 @@ app.post('/api/communities', authenticateToken, (req, res) => {
   if (!allowedTypes.includes(type)) {
     return res.status(400).json({ error: '类型不合法' });
   }
-  db.run('INSERT INTO communities (name, type, project) VALUES (?, ?, ?)',
-    [name, type, project],
+  const insertSql = COMMUNITIES_HAS_DISTRICT
+    ? 'INSERT INTO communities (name, type, project, district) VALUES (?, ?, ?, ?)'
+    : 'INSERT INTO communities (name, type, project) VALUES (?, ?, ?)';
+  const params = COMMUNITIES_HAS_DISTRICT
+    ? [name, type, project, '']
+    : [name, type, project];
+  db.run(insertSql,
+    params,
     function(err) {
       if (err) {
         return res.status(500).json({ error: '数据库错误' });
@@ -281,11 +298,13 @@ app.put('/api/communities/:id', authenticateToken, (req, res) => {
     return res.status(400).json({ error: '类型不合法' });
   }
 
-  db.run(`
-    UPDATE communities
-    SET name = ?, type = ?, project = ?
-    WHERE id = ?
-  `, [name, type, project, id], function(err) {
+  const updateSql = COMMUNITIES_HAS_DISTRICT
+    ? `UPDATE communities SET name = ?, type = ?, project = ?, district = COALESCE(district, '') WHERE id = ?`
+    : `UPDATE communities SET name = ?, type = ?, project = ? WHERE id = ?`;
+  const params = COMMUNITIES_HAS_DISTRICT
+    ? [name, type, project, id]
+    : [name, type, project, id];
+  db.run(updateSql, params, function(err) {
     if (err) {
       return res.status(500).json({ error: '数据库错误' });
     }
