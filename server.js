@@ -88,12 +88,12 @@ function initDatabase() {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
-  // 小区/街道表
+  // 组/排/小区/大区/召会表
   db.run(`CREATE TABLE IF NOT EXISTS communities (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    type TEXT NOT NULL, -- 'community' 或 'street'
-    district TEXT NOT NULL,
+    type TEXT NOT NULL, -- 'group'/'pai'/'community'/'region'/'church'
+    project TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
@@ -123,26 +123,15 @@ function initDatabase() {
     }
   });
 
-  // 插入一些示例小区数据
+  // 插入10个项目（名字为1~10）
   db.get("SELECT COUNT(*) as count FROM communities", (err, row) => {
     if (row && row.count === 0) {
-      const sampleCommunities = [
-        ['金港镇', 'street', '金港镇'],
-        ['杨舍镇', 'street', '杨舍镇'],
-        ['塘桥镇', 'street', '塘桥镇'],
-        ['凤凰镇', 'street', '凤凰镇'],
-        ['南丰镇', 'street', '南丰镇'],
-        ['大新镇', 'street', '大新镇'],
-        ['锦丰镇', 'street', '锦丰镇'],
-        ['乐余镇', 'street', '乐余镇'],
-        ['常阴沙现代农业示范园区', 'street', '常阴沙现代农业示范园区'],
-        ['双山岛旅游度假区', 'street', '双山岛旅游度假区']
-      ];
-      
-      sampleCommunities.forEach(community => {
-        db.run(`INSERT INTO communities (name, type, district) VALUES (?, ?, ?)`, community);
-      });
-      console.log('示例小区数据已插入');
+      for (let i = 1; i <= 10; i++) {
+        db.run(`INSERT INTO communities (name, type, project) VALUES (?, ?, ?)`, [
+          `示例${i}组`, 'group', `${i}`
+        ]);
+      }
+      console.log('已插入10个示例组，项目名为1~10');
     }
   });
 }
@@ -205,7 +194,7 @@ app.post('/api/login', async (req, res) => {
   });
 });
 
-// 获取小区/街道列表
+// 获取组/排/小区/大区/召会列表
 app.get('/api/communities', authenticateToken, (req, res) => {
   db.all('SELECT * FROM communities ORDER BY name', (err, rows) => {
     if (err) {
@@ -215,25 +204,28 @@ app.get('/api/communities', authenticateToken, (req, res) => {
   });
 });
 
-// 添加小区/街道
+// 添加组/排/小区/大区/召会
 app.post('/api/communities', authenticateToken, (req, res) => {
-  const { name, type, district } = req.body;
-
-  if (!name || !type || !district) {
+  const { name, type, project } = req.body;
+  if (!name || !type || !project) {
     return res.status(400).json({ error: '所有字段都是必填的' });
   }
-
-  db.run('INSERT INTO communities (name, type, district) VALUES (?, ?, ?)',
-    [name, type, district],
+  // 仅允许五种类型
+  const allowedTypes = ['group','pai','community','region','church'];
+  if (!allowedTypes.includes(type)) {
+    return res.status(400).json({ error: '类型不合法' });
+  }
+  db.run('INSERT INTO communities (name, type, project) VALUES (?, ?, ?)',
+    [name, type, project],
     function(err) {
       if (err) {
         return res.status(500).json({ error: '数据库错误' });
       }
-      res.json({ id: this.lastID, message: '小区/街道添加成功' });
+      res.json({ id: this.lastID, message: '添加成功' });
     });
 });
 
-// 删除小区/街道
+// 删除组/排/小区/大区/召会
 app.delete('/api/communities/:id', authenticateToken, (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM communities WHERE id = ?', [id], function(err) {
@@ -241,9 +233,9 @@ app.delete('/api/communities/:id', authenticateToken, (req, res) => {
       return res.status(500).json({ error: '数据库错误' });
     }
     if (this.changes === 0) {
-      return res.status(404).json({ error: '小区/街道不存在' });
+      return res.status(404).json({ error: '项目不存在' });
     }
-    res.json({ message: '小区/街道删除成功' });
+    res.json({ message: '项目删除成功' });
   });
 });
 

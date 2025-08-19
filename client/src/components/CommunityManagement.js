@@ -27,6 +27,15 @@ import api from '../services/api';
 const { Title } = Typography;
 const { Option } = Select;
 
+// 类型映射
+const typeLabels = {
+  group: '组',
+  pai: '排',
+  community: '小区',
+  region: '大区',
+  church: '召会',
+};
+
 const CommunityManagement = () => {
   const [communities, setCommunities] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -112,7 +121,13 @@ const CommunityManagement = () => {
 
   const columns = [
     {
-      title: '小区/街道名称',
+      title: '项目',
+      dataIndex: 'project',
+      key: 'project',
+      width: 120,
+    },
+    {
+      title: '名称',
       dataIndex: 'name',
       key: 'name',
       width: 200,
@@ -122,9 +137,7 @@ const CommunityManagement = () => {
             <TeamOutlined style={{ marginRight: 8, color: '#1890ff' }} />
             {text}
           </div>
-          <Tag color={record.type === 'street' ? 'blue' : 'green'}>
-            {record.type === 'street' ? '街道' : '小区'}
-          </Tag>
+          <Tag color="#1890ff">{typeLabels[record.type]}</Tag>
         </div>
       )
     },
@@ -133,23 +146,7 @@ const CommunityManagement = () => {
       dataIndex: 'type',
       key: 'type',
       width: 100,
-      render: (type) => (
-        <Tag color={type === 'street' ? 'blue' : 'green'}>
-          {type === 'street' ? '街道' : '小区'}
-        </Tag>
-      )
-    },
-    {
-      title: '所属区域',
-      dataIndex: 'district',
-      key: 'district',
-      width: 150,
-      render: (text) => (
-        <div>
-          <EnvironmentOutlined style={{ marginRight: 8, color: '#52c41a' }} />
-          {text}
-        </div>
-      )
+      render: (type) => <Tag color="#1890ff">{typeLabels[type]}</Tag>
     },
     {
       title: '创建时间',
@@ -166,17 +163,12 @@ const CommunityManagement = () => {
       render: (_, record) => (
         <Space size="small">
           <Tooltip title="编辑">
-            <Button
-              type="link"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => showEditModal(record)}
-            >
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => showEditModal(record)}>
               编辑
             </Button>
           </Tooltip>
           <Popconfirm
-            title="确定要删除这个小区/街道吗？"
+            title="确定要删除这个记录吗？"
             description="删除后相关的聚会记录将无法显示，请谨慎操作！"
             onConfirm={() => handleDelete(record.id)}
             okText="确定"
@@ -184,12 +176,7 @@ const CommunityManagement = () => {
             okType="danger"
           >
             <Tooltip title="删除">
-              <Button
-                type="link"
-                size="small"
-                danger
-                icon={<DeleteOutlined />}
-              >
+              <Button type="link" size="small" danger icon={<DeleteOutlined />}>
                 删除
               </Button>
             </Tooltip>
@@ -246,7 +233,7 @@ const CommunityManagement = () => {
 
       {/* 添加/编辑模态框 */}
       <Modal
-        title={editingCommunity ? '编辑小区/街道' : '添加小区/街道'}
+        title={editingCommunity ? '编辑记录' : '添加记录'}
         open={modalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
@@ -261,44 +248,31 @@ const CommunityManagement = () => {
           style={{ marginTop: 16 }}
         >
           <Form.Item
+            name="project"
+            label="项目"
+            rules={[{ required: true, message: '请输入项目！' }, { max: 100, message: '项目名称不能超过100个字符！' }]}
+          >
+            <Input placeholder="输入项目名称（如：1、2、3...）" maxLength={100} showCount />
+          </Form.Item>
+          <Form.Item
             name="name"
             label="名称"
-            rules={[
-              { required: true, message: '请输入小区/街道名称！' },
-              { max: 100, message: '名称不能超过100个字符！' }
-            ]}
+            rules={[{ required: true, message: '请输入名称！' }, { max: 100, message: '名称不能超过100个字符！' }]}
           >
-            <Input
-              placeholder="输入小区或街道名称"
-              maxLength={100}
-              showCount
-            />
+            <Input placeholder="输入组/排/小区/大区/召会名称" maxLength={100} showCount />
           </Form.Item>
-
           <Form.Item
             name="type"
             label="类型"
             rules={[{ required: true, message: '请选择类型！' }]}
           >
             <Select placeholder="选择类型">
-              <Option value="street">街道</Option>
+              <Option value="group">组</Option>
+              <Option value="pai">排</Option>
               <Option value="community">小区</Option>
+              <Option value="region">大区</Option>
+              <Option value="church">召会</Option>
             </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="district"
-            label="所属区域"
-            rules={[
-              { required: true, message: '请输入所属区域！' },
-              { max: 100, message: '区域名称不能超过100个字符！' }
-            ]}
-          >
-            <Input
-              placeholder="输入所属区域（如：金港镇、杨舍镇等）"
-              maxLength={100}
-              showCount
-            />
           </Form.Item>
         </Form>
       </Modal>

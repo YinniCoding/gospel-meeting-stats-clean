@@ -44,6 +44,14 @@ const MeetingForm = () => {
 
   const isEdit = !!id;
 
+  const typeLabels = {
+    group: '组',
+    pai: '排',
+    community: '小区',
+    region: '大区',
+    church: '召会',
+  };
+
   // ✅ useCallback to make function stable for useEffect
   const fetchCommunities = useCallback(async () => {
     try {
@@ -163,18 +171,18 @@ const MeetingForm = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="community_id"
-                label="小区/街道"
-                rules={[{ required: true, message: '请选择小区/街道！' }]}
+                label="组/排/小区/大区/召会"
+                rules={[{ required: true, message: '请选择组/排/小区/大区/召会！' }]}
               >
                 <Select
-                  placeholder="选择小区/街道"
+                  placeholder="选择组/排/小区/大区/召会"
                   showSearch
                   optionFilterProp="children"
                   suffixIcon={<TeamOutlined />}
                 >
                   {communities.map(community => (
                     <Option key={community.id} value={community.id}>
-                      {community.name} ({community.type === 'street' ? '街道' : '小区'})
+                      {community.name}（{typeLabels[community.type]}，项目：{community.project}）
                     </Option>
                   ))}
                 </Select>

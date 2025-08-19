@@ -31,6 +31,14 @@ const { Title } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
+const typeLabels = {
+  group: '组',
+  pai: '排',
+  community: '小区',
+  region: '大区',
+  church: '召会',
+};
+
 const MeetingList = () => {
   const navigate = useNavigate();
   const [meetings, setMeetings] = useState([]);
@@ -133,11 +141,12 @@ const MeetingList = () => {
       return;
     }
     const headers = [
-      '小区/街道', '类型', '聚会日期', '聚会时间', '地点', '参与人数', '备注', '创建人', '创建时间'
+      '项目', '名称', '类型', '聚会日期', '聚会时间', '地点', '参与人数', '备注', '创建人', '创建时间'
     ];
     const rows = meetings.map(item => [
+      item.project,
       item.community_name,
-      item.community_type === 'street' ? '街道' : '小区',
+      typeLabels[item.community_type],
       dayjs(item.meeting_date).format('YYYY-MM-DD'),
       item.meeting_time,
       item.location,
@@ -153,18 +162,29 @@ const MeetingList = () => {
 
   const columns = [
     {
-      title: '小区/街道',
+      title: '项目',
+      dataIndex: 'project',
+      key: 'project',
+      width: 100,
+    },
+    {
+      title: '名称',
       dataIndex: 'community_name',
       key: 'community_name',
       width: 120,
       render: (text, record) => (
         <div>
           <div style={{ fontWeight: 'bold' }}>{text}</div>
-          <Tag color={record.community_type === 'street' ? 'blue' : 'green'}>
-            {record.community_type === 'street' ? '街道' : '小区'}
-          </Tag>
+          <Tag color="#1890ff">{typeLabels[record.community_type]}</Tag>
         </div>
       )
+    },
+    {
+      title: '类型',
+      dataIndex: 'community_type',
+      key: 'community_type',
+      width: 80,
+      render: (type) => <Tag color="#1890ff">{typeLabels[type]}</Tag>
     },
     {
       title: '聚会日期',
@@ -264,16 +284,16 @@ const MeetingList = () => {
         >
           <Row gutter={[16, 16]} style={{ width: '100%' }}>
             <Col xs={24} sm={12} md={6}>
-              <Form.Item name="community_id" label="小区/街道">
+              <Form.Item name="community_id" label="组/排/小区/大区/召会">
                 <Select
-                  placeholder="选择小区/街道"
+                  placeholder="选择组/排/小区/大区/召会"
                   allowClear
                   showSearch
                   optionFilterProp="children"
                 >
                   {communities.map(community => (
                     <Option key={community.id} value={community.id}>
-                      {community.name}
+                      {community.name}（{typeLabels[community.type]}，项目：{community.project}）
                     </Option>
                   ))}
                 </Select>

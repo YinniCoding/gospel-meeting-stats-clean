@@ -4,10 +4,10 @@
 
 ## 功能特性
 
-- 🏠 **小区管理**: 支持添加、编辑、删除小区和街道信息
+- 🏠 **组/排/小区/大区/召会管理**: 支持添加、编辑、删除五类信息
 - 📅 **聚会记录**: 完整的聚会记录管理，包括时间、地点、参与人数等
 - 📸 **文件上传**: 支持图片和文档上传，丰富聚会记录内容
-- 📊 **统计分析**: 丰富的图表展示，支持按时间、小区等维度统计
+- 📊 **统计分析**: 丰富的图表展示，支持按时间、组/排/小区/大区/召会等维度统计
 - 🔐 **用户认证**: 管理员登录系统，支持多用户管理
 - 👤 **个人信息**: 支持修改姓名和密码，账户安全可控
 - 📱 **响应式设计**: 支持网页和手机端自适应访问
@@ -94,11 +94,11 @@ npm start
 - name: 真实姓名
 - role: 角色权限
 
-### 小区表 (communities)
+### 组织表 (communities)
 - id: 主键
-- name: 小区/街道名称
-- type: 类型 (street/community)
-- district: 所属区域
+- name: 名称
+- type: 类型 (group/pai/community/region/church)
+- project: 项目
 
 ### 聚会记录表 (meetings)
 - id: 主键
@@ -115,11 +115,11 @@ npm start
 ### 认证相关
 - `POST /api/login` - 用户登录
 
-### 小区管理
-- `GET /api/communities` - 获取小区列表
-- `POST /api/communities` - 添加小区
-- `PUT /api/communities/:id` - 更新小区
-- `DELETE /api/communities/:id` - 删除小区
+### 组织管理
+- `GET /api/communities` - 获取组织列表
+- `POST /api/communities` - 添加组织
+- `PUT /api/communities/:id` - 更新组织
+- `DELETE /api/communities/:id` - 删除组织
 
 ### 聚会记录
 - `GET /api/meetings` - 获取聚会记录列表

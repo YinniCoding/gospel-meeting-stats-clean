@@ -103,9 +103,10 @@ const Statistics = () => {
       return;
     }
     const headers = [
-      '小区/街道', '类型', '聚会次数', '总参与人数', '平均参与人数'
+      '项目', '名称', '类型', '聚会次数', '总参与人数', '平均参与人数'
     ];
     const rows = statistics.map(item => [
+      item.project,
       item.community_name,
       item.community_type === 'street' ? '街道' : '小区',
       item.meeting_count || 0,
@@ -144,27 +145,40 @@ const Statistics = () => {
 
   const colors = ['#1890ff', '#52c41a', '#722ed1', '#fa8c16', '#eb2f96', '#13c2c2', '#f5222d', '#fa541c'];
 
+  const typeLabels = {
+    group: '组',
+    pai: '排',
+    community: '小区',
+    region: '大区',
+    church: '召会',
+  };
+
   const columns = [
     {
-      title: '小区/街道',
+      title: '项目',
+      dataIndex: 'project',
+      key: 'project',
+      width: 100,
+    },
+    {
+      title: '名称',
       dataIndex: 'community_name',
       key: 'community_name',
       width: 150,
-      fixed: 'left'
+      fixed: 'left',
+      render: (text, record) => (
+        <div>
+          <div style={{ fontWeight: 'bold' }}>{text}</div>
+          <span style={{ color: '#1890ff', fontWeight: 'bold', marginLeft: 8 }}>{typeLabels[record.community_type]}</span>
+        </div>
+      )
     },
     {
       title: '类型',
       dataIndex: 'community_type',
       key: 'community_type',
       width: 80,
-      render: (type) => (
-        <span style={{ 
-          color: type === 'street' ? '#1890ff' : '#52c41a',
-          fontWeight: 'bold'
-        }}>
-          {type === 'street' ? '街道' : '小区'}
-        </span>
-      )
+      render: (type) => <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{typeLabels[type]}</span>
     },
     {
       title: '聚会次数',
@@ -214,18 +228,18 @@ const Statistics = () => {
             format="YYYY-MM-DD"
             placeholder={['开始日期', '结束日期']}
           />
-          <span>小区/街道：</span>
+          <span>组/排/小区/大区/召会：</span>
           <Select
             value={selectedCommunity}
             onChange={handleCommunityChange}
             style={{ width: 200 }}
-            placeholder="选择小区/街道"
+            placeholder="选择组/排/小区/大区/召会"
             allowClear
           >
             <Option value="all">全部</Option>
             {communities.map(community => (
               <Option key={community.id} value={community.name}>
-                {community.name}
+                {community.name}（{typeLabels[community.type]}，项目：{community.project}）
               </Option>
             ))}
           </Select>
