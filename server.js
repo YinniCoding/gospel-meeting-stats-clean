@@ -80,77 +80,87 @@ const db = new sqlite3.Database('./database.sqlite', (err) => {
 
 // 初始化数据库表
 function initDatabase() {
-  // 管理员表
-  db.run(`CREATE TABLE IF NOT EXISTS admins (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    name TEXT NOT NULL,
-    role TEXT DEFAULT 'admin',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+  db.serialize(() => {
+    // 管理员表
+    db.run(`CREATE TABLE IF NOT EXISTS admins (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      name TEXT NOT NULL,
+      role TEXT DEFAULT 'admin',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
 
-  // 组/排/小区/大区/召会表
-  db.run(`CREATE TABLE IF NOT EXISTS communities (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    type TEXT NOT NULL, -- 'group'/'pai'/'community'/'region'/'church'
-    project TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+    // 组/排/小区/大区/召会表
+    db.run(`CREATE TABLE IF NOT EXISTS communities (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL, -- 'group'/'pai'/'community'/'region'/'church'
+      project TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
 
-  // 迁移：为已存在的 communities 表补充缺失的 project 列
-  db.all("PRAGMA table_info(communities)", (err, columns) => {
-    if (!err && Array.isArray(columns)) {
-      const hasProject = columns.some(col => col.name === 'project');
-      if (!hasProject) {
-        db.run("ALTER TABLE communities ADD COLUMN project TEXT NOT NULL DEFAULT '1'", alterErr => {
-          if (alterErr) {
-            console.error('为 communities 添加 project 列失败:', alterErr.message);
-          } else {
-            console.log("已为 communities 表添加缺失的 'project' 列，默认值为 '1'");
+    // 迁移：为已存在的 communities 表补充缺失的 project 列，然后再进行后续操作
+    db.all("PRAGMA table_info(communities)", (err, columns) => {
+      const proceed = () => {
+        // 聚会记录表
+        db.run(`CREATE TABLE IF NOT EXISTS meetings (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          community_id INTEGER NOT NULL,
+          meeting_date DATE NOT NULL,
+          meeting_time TEXT NOT NULL,
+          location TEXT NOT NULL,
+          participants_count INTEGER DEFAULT 0,
+          notes TEXT,
+          created_by INTEGER NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (community_id) REFERENCES communities (id),
+          FOREIGN KEY (created_by) REFERENCES admins (id)
+        )`);
+
+        // 插入默认管理员账户
+        db.get("SELECT id FROM admins WHERE username = 'admin'", (err2, row) => {
+          if (!row) {
+            const defaultPassword = bcrypt.hashSync('admin123', 10);
+            db.run(`INSERT INTO admins (username, password, name, role) VALUES (?, ?, ?, ?)`,
+              ['admin', defaultPassword, '系统管理员', 'super_admin']);
+            console.log('默认管理员账户已创建: admin/admin123');
           }
         });
+
+        // 插入10个项目（名字为1~10）
+        db.get("SELECT COUNT(*) as count FROM communities", (err3, row2) => {
+          if (row2 && row2.count === 0) {
+            for (let i = 1; i <= 10; i++) {
+              db.run(`INSERT INTO communities (name, type, project) VALUES (?, ?, ?)`, [
+                `示例${i}组`, 'group', `${i}`
+              ]);
+            }
+            console.log('已插入10个示例组，项目名为1~10');
+          }
+        });
+      };
+
+      if (!err && Array.isArray(columns)) {
+        const hasProject = columns.some(col => col.name === 'project');
+        if (!hasProject) {
+          db.run("ALTER TABLE communities ADD COLUMN project TEXT NOT NULL DEFAULT '1'", alterErr => {
+            if (alterErr) {
+              console.error('为 communities 添加 project 列失败:', alterErr.message);
+              // 即使失败也尝试继续，避免服务完全不可用
+            } else {
+              console.log("已为 communities 表添加缺失的 'project' 列，默认值为 '1'");
+            }
+            proceed();
+          });
+        } else {
+          proceed();
+        }
+      } else {
+        proceed();
       }
-    }
-  });
-
-  // 聚会记录表
-  db.run(`CREATE TABLE IF NOT EXISTS meetings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    community_id INTEGER NOT NULL,
-    meeting_date DATE NOT NULL,
-    meeting_time TEXT NOT NULL,
-    location TEXT NOT NULL,
-    participants_count INTEGER DEFAULT 0,
-    notes TEXT,
-    created_by INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (community_id) REFERENCES communities (id),
-    FOREIGN KEY (created_by) REFERENCES admins (id)
-  )`);
-
-  // 插入默认管理员账户
-  db.get("SELECT id FROM admins WHERE username = 'admin'", (err, row) => {
-    if (!row) {
-      const defaultPassword = bcrypt.hashSync('admin123', 10);
-      db.run(`INSERT INTO admins (username, password, name, role) VALUES (?, ?, ?, ?)`,
-        ['admin', defaultPassword, '系统管理员', 'super_admin']);
-      console.log('默认管理员账户已创建: admin/admin123');
-    }
-  });
-
-  // 插入10个项目（名字为1~10）
-  db.get("SELECT COUNT(*) as count FROM communities", (err, row) => {
-    if (row && row.count === 0) {
-      for (let i = 1; i <= 10; i++) {
-        db.run(`INSERT INTO communities (name, type, project) VALUES (?, ?, ?)`, [
-          `示例${i}组`, 'group', `${i}`
-        ]);
-      }
-      console.log('已插入10个示例组，项目名为1~10');
-    }
+    });
   });
 }
 
