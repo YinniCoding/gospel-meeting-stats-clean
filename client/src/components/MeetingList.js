@@ -293,7 +293,7 @@ const MeetingList = () => {
                 >
                   {communities.map(community => (
                     <Option key={community.id} value={community.id}>
-                      {community.name}（{typeLabels[community.type]}，项目：{community.project}）
+                      {typeLabels[community.type]}
                     </Option>
                   ))}
                 </Select>

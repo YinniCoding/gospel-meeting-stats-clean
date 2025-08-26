@@ -277,7 +277,7 @@ const Statistics = () => {
               .filter(community => selectedType === 'all' || community.type === selectedType)
               .map(community => (
                 <Option key={community.id} value={community.name}>
-                  {community.name}（项目：{community.project}）
+                  {community.name}
                 </Option>
               ))}
           </Select>

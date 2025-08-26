@@ -41,8 +41,6 @@ const MeetingForm = () => {
   const [initialValues, setInitialValues] = useState({});
   const [fileList, setFileList] = useState([]);
   const [imageList, setImageList] = useState([]);
-  const [selectedProject, setSelectedProject] = useState();
-  const [selectedType, setSelectedType] = useState();
 
   const isEdit = !!id;
 
@@ -74,15 +72,11 @@ const MeetingForm = () => {
       const formData = {
         ...meeting,
         meeting_date: dayjs(meeting.meeting_date),
-        community_id: meeting.community_id,
-        project: meeting.project,
-        type: meeting.community_type
+        community_id: meeting.community_id
       };
 
       setInitialValues(formData);
       form.setFieldsValue(formData);
-      setSelectedProject(meeting.project);
-      setSelectedType(meeting.community_type);
     } catch (error) {
       console.error('获取聚会记录失败:', error);
       message.error('获取聚会记录失败');
@@ -104,7 +98,6 @@ const MeetingForm = () => {
       setLoading(true);
       
       const formData = new FormData();
-      formData.append('project', values.project);
       formData.append('community_id', values.community_id);
       formData.append('meeting_date', values.meeting_date.format('YYYY-MM-DD'));
       formData.append('meeting_time', values.meeting_time);
@@ -174,72 +167,25 @@ const MeetingForm = () => {
           initialValues={initialValues}
           disabled={loading}
         >
-          {/* 第1行：项目 + 组/排/小区/大区/召会类型 + 具体单位 */}
-          <Row gutter={[16, 0]}>
-            <Col xs={24} md={8}>
-              <Form.Item
-                name="project"
-                label="项目"
-                rules={[{ required: true, message: '请选择项目！' }]}
-              >
-                <Select
-                  placeholder="选择项目（1~10）"
-                  onChange={(value) => {
-                    setSelectedProject(value);
-                    form.setFieldsValue({ type: undefined, community_id: undefined });
-                    setSelectedType(undefined);
-                  }}
-                >
-                  {Array.from({ length: 10 }, (_, i) => `${i + 1}`).map(p => (
-                    <Option key={p} value={p}>{p}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={8}>
-              <Form.Item
-                name="type"
-                label="组/排/小区/大区/召会"
-                rules={[{ required: true, message: '请选择类型！' }]}
-              >
-                <Select
-                  placeholder="选择类型"
-                  onChange={(value) => {
-                    setSelectedType(value);
-                    form.setFieldsValue({ community_id: undefined });
-                  }}
-                  disabled={!selectedProject}
-                >
-                  <Option value="group">组</Option>
-                  <Option value="pai">排</Option>
-                  <Option value="community">小区</Option>
-                  <Option value="region">大区</Option>
-                  <Option value="church">召会</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={8}>
+          {/* 第1行：组/排/小区/大区/召会 */}
+          <Row gutter={[24, 0]}>
+            <Col xs={24} md={12}>
               <Form.Item
                 name="community_id"
-                label="具体单位"
-                rules={[{ required: true, message: '请选择具体单位！' }]}
+                label="组/排/小区/大区/召会"
+                rules={[{ required: true, message: '请选择组/排/小区/大区/召会！' }]}
               >
                 <Select
-                  placeholder="选择具体单位"
+                  placeholder="选择组/排/小区/大区/召会"
                   showSearch
                   optionFilterProp="children"
                   suffixIcon={<TeamOutlined />}
-                  disabled={!selectedProject || !selectedType}
                 >
-                  {communities
-                    .filter(community => 
-                      community.project === selectedProject && community.type === selectedType
-                    )
-                    .map(community => (
-                      <Option key={community.id} value={community.id}>
-                        {community.name}
-                      </Option>
-                    ))}
+                  {communities.map(community => (
+                    <Option key={community.id} value={community.id}>
+                      {typeLabels[community.type]}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>
