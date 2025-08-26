@@ -284,18 +284,18 @@ const MeetingList = () => {
         >
           <Row gutter={[16, 16]} style={{ width: '100%' }}>
             <Col xs={24} sm={12} md={6}>
-              <Form.Item name="community_id" label="组/排/小区/大区/召会">
+              <Form.Item name="community_type" label="组/排/小区/大区/召会">
                 <Select
                   placeholder="选择组/排/小区/大区/召会"
                   allowClear
                   showSearch
                   optionFilterProp="children"
                 >
-                  {communities.map(community => (
-                    <Option key={community.id} value={community.id}>
-                      {typeLabels[community.type]}
-                    </Option>
-                  ))}
+                  <Option value="group">组</Option>
+                  <Option value="pai">排</Option>
+                  <Option value="community">小区</Option>
+                  <Option value="region">大区</Option>
+                  <Option value="church">召会</Option>
                 </Select>
               </Form.Item>
             </Col>

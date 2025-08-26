@@ -72,7 +72,8 @@ const MeetingForm = () => {
       const formData = {
         ...meeting,
         meeting_date: dayjs(meeting.meeting_date),
-        community_id: meeting.community_id
+        project: meeting.project,
+        community_type: meeting.community_type
       };
 
       setInitialValues(formData);
@@ -98,7 +99,8 @@ const MeetingForm = () => {
       setLoading(true);
       
       const formData = new FormData();
-      formData.append('community_id', values.community_id);
+      formData.append('project', values.project);
+      formData.append('community_type', values.community_type);
       formData.append('meeting_date', values.meeting_date.format('YYYY-MM-DD'));
       formData.append('meeting_time', values.meeting_time);
       formData.append('location', values.location || '');
@@ -167,25 +169,36 @@ const MeetingForm = () => {
           initialValues={initialValues}
           disabled={loading}
         >
-          {/* 第1行：组/排/小区/大区/召会 */}
+          {/* 第1行：项目 + 组/排/小区/大区/召会 */}
           <Row gutter={[24, 0]}>
             <Col xs={24} md={12}>
               <Form.Item
-                name="community_id"
+                name="project"
+                label="项目"
+                rules={[{ required: true, message: '请选择项目！' }]}
+              >
+                <Select placeholder="选择项目（1~10）">
+                  {Array.from({ length: 10 }, (_, i) => `${i + 1}`).map(p => (
+                    <Option key={p} value={p}>{p}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="community_type"
                 label="组/排/小区/大区/召会"
                 rules={[{ required: true, message: '请选择组/排/小区/大区/召会！' }]}
               >
                 <Select
                   placeholder="选择组/排/小区/大区/召会"
-                  showSearch
-                  optionFilterProp="children"
                   suffixIcon={<TeamOutlined />}
                 >
-                  {communities.map(community => (
-                    <Option key={community.id} value={community.id}>
-                      {typeLabels[community.type]}
-                    </Option>
-                  ))}
+                  <Option value="group">组</Option>
+                  <Option value="pai">排</Option>
+                  <Option value="community">小区</Option>
+                  <Option value="region">大区</Option>
+                  <Option value="church">召会</Option>
                 </Select>
               </Form.Item>
             </Col>

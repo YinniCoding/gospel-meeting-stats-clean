@@ -109,7 +109,8 @@ function initDatabase() {
         // 聚会记录表
         db.run(`CREATE TABLE IF NOT EXISTS meetings (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          community_id INTEGER NOT NULL,
+          project TEXT NOT NULL,
+          community_type TEXT NOT NULL,
           meeting_date DATE NOT NULL,
           meeting_time TEXT NOT NULL,
           location TEXT NOT NULL,
@@ -118,7 +119,6 @@ function initDatabase() {
           created_by INTEGER NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (community_id) REFERENCES communities (id),
           FOREIGN KEY (created_by) REFERENCES admins (id)
         )`);
 
@@ -317,24 +317,28 @@ app.put('/api/communities/:id', authenticateToken, (req, res) => {
 
 // 获取聚会记录列表
 app.get('/api/meetings', authenticateToken, (req, res) => {
-  const { community_id, start_date, end_date, location } = req.query;
+  const { project, community_type, start_date, end_date, location } = req.query;
   const page = parseInt(req.query.page || '1', 10);
   const limit = parseInt(req.query.limit || '20', 10);
   const offset = (page - 1) * limit;
 
   let query = `
-    SELECT m.*, c.name as community_name, c.type as community_type, c.project as project, a.name as created_by_name
+    SELECT m.*, a.name as created_by_name
     FROM meetings m
-    JOIN communities c ON m.community_id = c.id
     JOIN admins a ON m.created_by = a.id
   `;
   
   let params = [];
   let whereConditions = [];
 
-  if (community_id) {
-    whereConditions.push('m.community_id = ?');
-    params.push(community_id);
+  if (project) {
+    whereConditions.push('m.project = ?');
+    params.push(project);
+  }
+
+  if (community_type) {
+    whereConditions.push('m.community_type = ?');
+    params.push(community_type);
   }
 
   if (start_date) {
@@ -367,7 +371,6 @@ app.get('/api/meetings', authenticateToken, (req, res) => {
     // 获取总记录数
     let countQuery = `
       SELECT COUNT(*) as total FROM meetings m
-      JOIN communities c ON m.community_id = c.id
     `;
     
     if (whereConditions.length > 0) {
@@ -398,12 +401,8 @@ app.get('/api/meetings/:id', authenticateToken, (req, res) => {
   const query = `
     SELECT 
       m.*, 
-      c.name as community_name, 
-      c.type as community_type,
-      c.project as project,
       a.name as created_by_name
     FROM meetings m
-    JOIN communities c ON m.community_id = c.id
     JOIN admins a ON m.created_by = a.id
     WHERE m.id = ?
   `;
@@ -423,16 +422,16 @@ app.post('/api/meetings', authenticateToken, upload.fields([
   { name: 'images', maxCount: 5 },
   { name: 'files', maxCount: 10 }
 ]), (req, res) => {
-  const { community_id, meeting_date, meeting_time, location, participants_count, notes } = req.body;
+  const { project, community_type, meeting_date, meeting_time, location, participants_count, notes } = req.body;
 
-  if (!community_id || !meeting_date || !meeting_time) {
+  if (!project || !community_type || !meeting_date || !meeting_time) {
     return res.status(400).json({ error: '必填字段不能为空' });
   }
 
   db.run(`
-    INSERT INTO meetings (community_id, meeting_date, meeting_time, location, participants_count, notes, created_by)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `, [community_id, meeting_date, meeting_time, (location || ''), participants_count || 0, notes, req.user.id],
+    INSERT INTO meetings (project, community_type, meeting_date, meeting_time, location, participants_count, notes, created_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `, [project, community_type, meeting_date, meeting_time, (location || ''), participants_count || 0, notes, req.user.id],
   function(err) {
     if (err) {
       return res.status(500).json({ error: '数据库错误' });
@@ -485,20 +484,20 @@ app.put('/api/meetings/:id', authenticateToken, upload.fields([
   { name: 'files', maxCount: 10 }
 ]), (req, res) => {
   const { id } = req.params;
-  const { community_id, meeting_date, meeting_time, location } = req.body;
+  const { project, community_type, meeting_date, meeting_time, location } = req.body;
   const participants_count = req.body.participants_count ? parseInt(req.body.participants_count, 10) : 0;
   const notes = req.body.notes || '';
 
-  if (!community_id || !meeting_date || !meeting_time) {
+  if (!project || !community_type || !meeting_date || !meeting_time) {
     return res.status(400).json({ error: '必填字段不能为空' });
   }
 
   db.run(`
     UPDATE meetings 
-    SET community_id = ?, meeting_date = ?, meeting_time = ?, location = ?, 
+    SET project = ?, community_type = ?, meeting_date = ?, meeting_time = ?, location = ?, 
         participants_count = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `, [community_id, meeting_date, meeting_time, (location || ''), participants_count || 0, notes, id],
+  `, [project, community_type, meeting_date, meeting_time, (location || ''), participants_count || 0, notes, id],
   function(err) {
     if (err) {
       return res.status(500).json({ error: '数据库错误' });
@@ -576,45 +575,45 @@ app.get('/api/statistics', authenticateToken, (req, res) => {
   if (groupBy === 'project') {
     query = `
       SELECT 
-        c.project as project,
+        m.project as project,
         '' as community_name,
         NULL as community_type,
         COUNT(m.id) as meeting_count,
         SUM(m.participants_count) as total_participants,
         AVG(m.participants_count) as avg_participants
-      FROM communities c
-      LEFT JOIN meetings m ON c.id = m.community_id ${dateFilter ? 'AND ' + dateFilter.replace('WHERE', '') : ''}
-      GROUP BY c.project
-      ORDER BY c.project
+      FROM meetings m
+      ${dateFilter}
+      GROUP BY m.project
+      ORDER BY m.project
     `;
   } else if (groupBy === 'project_unit') {
     query = `
       SELECT 
-        c.project as project,
-        c.name as community_name,
-        c.type as community_type,
+        m.project as project,
+        m.community_type as community_name,
+        m.community_type as community_type,
         COUNT(m.id) as meeting_count,
         SUM(m.participants_count) as total_participants,
         AVG(m.participants_count) as avg_participants
-      FROM communities c
-      LEFT JOIN meetings m ON c.id = m.community_id ${dateFilter ? 'AND ' + dateFilter.replace('WHERE', '') : ''}
-      GROUP BY c.project, c.id, c.name, c.type
-      ORDER BY c.project, c.name
+      FROM meetings m
+      ${dateFilter}
+      GROUP BY m.project, m.community_type
+      ORDER BY m.project, m.community_type
     `;
   } else {
     // 默认：按单位（组/排/小区/大区/召会）
     query = `
       SELECT 
-        c.project as project,
-        c.name as community_name,
-        c.type as community_type,
+        '' as project,
+        m.community_type as community_name,
+        m.community_type as community_type,
         COUNT(m.id) as meeting_count,
         SUM(m.participants_count) as total_participants,
         AVG(m.participants_count) as avg_participants
-      FROM communities c
-      LEFT JOIN meetings m ON c.id = m.community_id ${dateFilter ? 'AND ' + dateFilter.replace('WHERE', '') : ''}
-      GROUP BY c.id, c.project, c.name, c.type
-      ORDER BY c.name
+      FROM meetings m
+      ${dateFilter}
+      GROUP BY m.community_type
+      ORDER BY m.community_type
     `;
   }
 
