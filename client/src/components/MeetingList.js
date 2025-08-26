@@ -42,7 +42,6 @@ const typeLabels = {
 const MeetingList = () => {
   const navigate = useNavigate();
   const [meetings, setMeetings] = useState([]);
-  const [communities, setCommunities] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -55,18 +54,8 @@ const MeetingList = () => {
   const [searchForm] = Form.useForm();
 
   useEffect(() => {
-    fetchCommunities();
     fetchMeetings();
   }, []);
-
-  const fetchCommunities = async () => {
-    try {
-      const response = await api.get('/api/communities');
-      setCommunities(response.data);
-    } catch (error) {
-      console.error('获取小区列表失败:', error);
-    }
-  };
 
   const fetchMeetings = async (page = 1, pageSize = 20, filters = {}) => {
     try {
@@ -271,10 +260,24 @@ const MeetingList = () => {
           style={{ marginBottom: 16 }}
         >
           <Row gutter={[16, 16]} style={{ width: '100%' }}>
-            <Col xs={24} sm={12} md={6}>
+            <Col xs={24} sm={12} md={5}>
+              <Form.Item name="project" label="项目">
+                <Select
+                  placeholder="选择项目"
+                  allowClear
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {Array.from({ length: 10 }, (_, i) => `${i + 1}`).map(p => (
+                    <Option key={p} value={p}>{p}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12} md={5}>
               <Form.Item name="community_type" label="组/排/小区/大区/召会">
                 <Select
-                  placeholder="选择组/排/小区/大区/召会"
+                  placeholder="选择类型"
                   allowClear
                   showSearch
                   optionFilterProp="children"
@@ -292,12 +295,12 @@ const MeetingList = () => {
                 <RangePicker style={{ width: '100%' }} />
               </Form.Item>
             </Col>
-            <Col xs={24} sm={12} md={6}>
+            <Col xs={24} sm={12} md={4}>
               <Form.Item name="location" label="地点">
                 <Input placeholder="输入地点关键词" />
               </Form.Item>
             </Col>
-            <Col xs={24} sm={12} md={6}>
+            <Col xs={24} sm={12} md={4}>
               <Form.Item>
                 <Space>
                   <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>

@@ -135,8 +135,8 @@ const Statistics = () => {
   // 准备图表数据
   const getName = (item) => {
     if (groupBy === 'project') return `项目 ${item.project}`;
-    if (groupBy === 'project_unit') return `${item.project} - ${item.community_name}`;
-    return item.community_name;
+    if (groupBy === 'project_unit') return `${item.project} - ${typeLabels[item.community_type]}`;
+    return typeLabels[item.community_type] || item.community_name;
   };
 
   const chartData = statistics
