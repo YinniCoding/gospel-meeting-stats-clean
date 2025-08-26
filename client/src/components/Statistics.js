@@ -47,6 +47,7 @@ const Statistics = () => {
   const [statistics, setStatistics] = useState([]);
   const [dateRange, setDateRange] = useState([dayjs().subtract(30, 'day'), dayjs()]);
   const [selectedCommunity, setSelectedCommunity] = useState('all');
+  const [selectedType, setSelectedType] = useState('all');
   const [communities, setCommunities] = useState([]);
   const [groupBy, setGroupBy] = useState('project'); // project | unit | project_unit
 
@@ -56,7 +57,7 @@ const Statistics = () => {
 
   useEffect(() => {
     fetchStatistics();
-  }, [dateRange, selectedCommunity, groupBy]);
+  }, [dateRange, selectedCommunity, selectedType, groupBy]);
 
   const fetchCommunities = async () => {
     try {
@@ -92,6 +93,10 @@ const Statistics = () => {
 
   const handleCommunityChange = (value) => {
     setSelectedCommunity(value);
+  };
+
+  const handleTypeChange = (value) => {
+    setSelectedType(value);
   };
 
   const handleRefresh = () => {
@@ -135,7 +140,10 @@ const Statistics = () => {
   };
 
   const chartData = statistics
-    .filter(item => selectedCommunity === 'all' || item.community_name === selectedCommunity)
+    .filter(item => 
+      (selectedCommunity === 'all' || item.community_name === selectedCommunity) &&
+      (selectedType === 'all' || item.community_type === selectedType)
+    )
     .map(item => ({
       name: getName(item),
       meetings: item.meeting_count || 0,
@@ -241,20 +249,37 @@ const Statistics = () => {
             <Option value="unit">按组/排/小区/大区/召会</Option>
             <Option value="project_unit">按 项目+组/排/小区/大区/召会</Option>
           </Select>
-          <span>组/排/小区/大区/召会：</span>
+          <span>类型：</span>
+          <Select
+            value={selectedType}
+            onChange={handleTypeChange}
+            style={{ width: 150 }}
+            placeholder="选择类型"
+            allowClear
+          >
+            <Option value="all">全部</Option>
+            <Option value="group">组</Option>
+            <Option value="pai">排</Option>
+            <Option value="community">小区</Option>
+            <Option value="region">大区</Option>
+            <Option value="church">召会</Option>
+          </Select>
+          <span>具体单位：</span>
           <Select
             value={selectedCommunity}
             onChange={handleCommunityChange}
             style={{ width: 200 }}
-            placeholder="选择组/排/小区/大区/召会"
+            placeholder="选择具体单位"
             allowClear
           >
             <Option value="all">全部</Option>
-            {communities.map(community => (
-              <Option key={community.id} value={community.name}>
-                {community.name}（{typeLabels[community.type]}，项目：{community.project}）
-              </Option>
-            ))}
+            {communities
+              .filter(community => selectedType === 'all' || community.type === selectedType)
+              .map(community => (
+                <Option key={community.id} value={community.name}>
+                  {community.name}（项目：{community.project}）
+                </Option>
+              ))}
           </Select>
           <Button 
             type="primary" 
