@@ -170,8 +170,8 @@ const MeetingForm = () => {
           disabled={loading}
         >
           {/* 第1行：项目 + 组/排/小区/大区/召会 */}
-          <Row gutter={[24, 0]}>
-            <Col xs={24} md={12}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={12}>
               <Form.Item
                 name="project"
                 label="项目"
@@ -184,7 +184,7 @@ const MeetingForm = () => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col xs={24} md={12}>
+            <Col xs={24} sm={12} md={12}>
               <Form.Item
                 name="community_type"
                 label="组/排/小区/大区/召会"
@@ -205,8 +205,8 @@ const MeetingForm = () => {
           </Row>
 
           {/* 第2行：日期 + 时间 + 人数 */}
-          <Row gutter={[24, 0]}>
-            <Col xs={24} md={8}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={8} md={8}>
               <Form.Item
                 name="meeting_date"
                 label="聚会日期"
@@ -220,7 +220,7 @@ const MeetingForm = () => {
                 />
               </Form.Item>
             </Col>
-            <Col xs={24} md={8}>
+            <Col xs={24} sm={8} md={8}>
               <Form.Item
                 name="meeting_time"
                 label="聚会时间"
@@ -239,7 +239,7 @@ const MeetingForm = () => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col xs={24} md={8}>
+            <Col xs={24} sm={8} md={8}>
               <Form.Item
                 name="participants_count"
                 label="参与人数"
@@ -259,7 +259,7 @@ const MeetingForm = () => {
             </Col>
           </Row>
 
-          <Row gutter={[24, 0]}>
+          <Row gutter={[16, 16]}>
             <Col span={24}>
               <Form.Item
                 name="location"
@@ -276,7 +276,7 @@ const MeetingForm = () => {
             </Col>
           </Row>
 
-          <Row gutter={[24, 0]}>
+          <Row gutter={[16, 16]}>
             <Col span={24}>
               <Form.Item
                 name="notes"
@@ -294,7 +294,7 @@ const MeetingForm = () => {
           </Row>
 
           {/* 图片上传 */}
-          <Row gutter={[24, 0]}>
+          <Row gutter={[16, 16]}>
             <Col span={24}>
               <Form.Item label="聚会图片">
                 <Upload
@@ -320,7 +320,7 @@ const MeetingForm = () => {
           </Row>
 
           {/* 文件上传 */}
-          <Row gutter={[24, 0]}>
+          <Row gutter={[16, 16]}>
             <Col span={24}>
               <Form.Item label="相关文件">
                 <Upload

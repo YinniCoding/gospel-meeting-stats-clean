@@ -176,23 +176,11 @@ const Statistics = () => {
       width: 100,
     },
     {
-      title: '名称',
-      dataIndex: 'community_name',
-      key: 'community_name',
-      width: 150,
-      fixed: 'left',
-      render: (text, record) => (
-        <div>
-          <div style={{ fontWeight: 'bold' }}>{text}</div>
-          <span style={{ color: '#1890ff', fontWeight: 'bold', marginLeft: 8 }}>{typeLabels[record.community_type]}</span>
-        </div>
-      )
-    },
-    {
       title: '类型',
       dataIndex: 'community_type',
       key: 'community_type',
-      width: 80,
+      width: 120,
+      fixed: 'left',
       render: (type) => <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{typeLabels[type]}</span>
     },
     {

@@ -168,22 +168,10 @@ const MeetingList = () => {
       width: 100,
     },
     {
-      title: '名称',
-      dataIndex: 'community_name',
-      key: 'community_name',
-      width: 120,
-      render: (text, record) => (
-        <div>
-          <div style={{ fontWeight: 'bold' }}>{text}</div>
-          <Tag color="#1890ff">{typeLabels[record.community_type]}</Tag>
-        </div>
-      )
-    },
-    {
       title: '类型',
       dataIndex: 'community_type',
       key: 'community_type',
-      width: 80,
+      width: 100,
       render: (type) => <Tag color="#1890ff">{typeLabels[type]}</Tag>
     },
     {

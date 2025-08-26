@@ -19,7 +19,6 @@ const Dashboard = () => {
   const [stats, setStats] = useState({
     totalMeetings: 0,
     totalParticipants: 0,
-    totalCommunities: 0,
     recentMeetings: []
   });
   const [loading, setLoading] = useState(true);
@@ -34,7 +33,6 @@ const Dashboard = () => {
       
       // 获取统计数据
       const statsResponse = await api.get('/api/statistics');
-      const communitiesResponse = await api.get('/api/communities');
       const meetingsResponse = await api.get('/api/meetings?limit=5');
       
       const totalParticipants = statsResponse.data.reduce((sum, item) => sum + (item.total_participants || 0), 0);
@@ -43,7 +41,6 @@ const Dashboard = () => {
       setStats({
         totalMeetings,
         totalParticipants,
-        totalCommunities: communitiesResponse.data.length,
         recentMeetings: meetingsResponse.data.meetings || []
       });
     } catch (error) {
@@ -73,7 +70,7 @@ const Dashboard = () => {
       icon: <TeamOutlined />,
       color: '#722ed1',
       onClick: () => navigate('/communities'),
-      description: '管理项目/类型/名称'
+      description: '管理项目和组织类型'
     },
     {
       title: '聚会列表',
@@ -127,8 +124,8 @@ const Dashboard = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card className="stats-card">
             <Statistic
-              title="管理小区数"
-              value={stats.totalCommunities}
+              title="管理项目数"
+              value={10}
               prefix={<TeamOutlined />}
               valueStyle={{ color: '#722ed1' }}
             />

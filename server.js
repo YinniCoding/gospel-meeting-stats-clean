@@ -106,21 +106,131 @@ function initDatabase() {
     db.all("PRAGMA table_info(communities)", (err, columns) => {
       let hasDistrict = false;
       const proceed = () => {
-        // 聚会记录表
-        db.run(`CREATE TABLE IF NOT EXISTS meetings (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          project TEXT NOT NULL,
-          community_type TEXT NOT NULL,
-          meeting_date DATE NOT NULL,
-          meeting_time TEXT NOT NULL,
-          location TEXT NOT NULL,
-          participants_count INTEGER DEFAULT 0,
-          notes TEXT,
-          created_by INTEGER NOT NULL,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (created_by) REFERENCES admins (id)
-        )`);
+        // 聚会记录表 - 检查并迁移表结构
+        db.all("PRAGMA table_info(meetings)", (meetingErr, meetingColumns) => {
+          if (meetingErr || !meetingColumns || meetingColumns.length === 0) {
+            // 表不存在，创建新表
+            db.run(`CREATE TABLE IF NOT EXISTS meetings (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              project TEXT NOT NULL,
+              community_type TEXT NOT NULL,
+              meeting_date DATE NOT NULL,
+              meeting_time TEXT NOT NULL,
+              location TEXT NOT NULL,
+              participants_count INTEGER DEFAULT 0,
+              notes TEXT,
+              created_by INTEGER NOT NULL,
+              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (created_by) REFERENCES admins (id)
+            )`);
+          } else {
+            // 检查是否需要迁移
+            const hasProject = meetingColumns.some(col => col.name === 'project');
+            const hasCommunityType = meetingColumns.some(col => col.name === 'community_type');
+            const hasCommunityId = meetingColumns.some(col => col.name === 'community_id');
+            
+            if (!hasProject || !hasCommunityType) {
+              // 需要迁移表结构
+              console.log('开始迁移meetings表结构...');
+              
+              // 1. 创建新表
+              db.run(`CREATE TABLE IF NOT EXISTS meetings_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project TEXT NOT NULL,
+                community_type TEXT NOT NULL,
+                meeting_date DATE NOT NULL,
+                meeting_time TEXT NOT NULL,
+                location TEXT NOT NULL,
+                participants_count INTEGER DEFAULT 0,
+                notes TEXT,
+                created_by INTEGER NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (created_by) REFERENCES admins (id)
+              )`, (createErr) => {
+                if (createErr) {
+                  console.error('创建新meetings表失败:', createErr);
+                  return;
+                }
+                
+                if (hasCommunityId) {
+                  // 2. 迁移旧数据
+                  db.all(`
+                    SELECT m.*, c.project, c.type as community_type 
+                    FROM meetings m 
+                    LEFT JOIN communities c ON m.community_id = c.id
+                  `, (selectErr, oldRows) => {
+                    if (selectErr) {
+                      console.error('读取旧数据失败:', selectErr);
+                      return;
+                    }
+                    
+                    if (oldRows && oldRows.length > 0) {
+                      const insertPromises = oldRows.map(row => {
+                        return new Promise((resolve, reject) => {
+                          db.run(`
+                            INSERT INTO meetings_new (
+                              project, community_type, meeting_date, meeting_time, 
+                              location, participants_count, notes, created_by, created_at, updated_at
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                          `, [
+                            row.project || '1', 
+                            row.community_type || 'group',
+                            row.meeting_date,
+                            row.meeting_time,
+                            row.location,
+                            row.participants_count,
+                            row.notes,
+                            row.created_by,
+                            row.created_at,
+                            row.updated_at
+                          ], (insertErr) => {
+                            if (insertErr) reject(insertErr);
+                            else resolve();
+                          });
+                        });
+                      });
+                      
+                      Promise.all(insertPromises).then(() => {
+                        // 3. 删除旧表，重命名新表
+                        db.run('DROP TABLE meetings', (dropErr) => {
+                          if (dropErr) {
+                            console.error('删除旧表失败:', dropErr);
+                            return;
+                          }
+                          db.run('ALTER TABLE meetings_new RENAME TO meetings', (renameErr) => {
+                            if (renameErr) {
+                              console.error('重命名表失败:', renameErr);
+                            } else {
+                              console.log('meetings表迁移完成');
+                            }
+                          });
+                        });
+                      }).catch(err => {
+                        console.error('数据迁移失败:', err);
+                      });
+                    } else {
+                      // 没有旧数据，直接替换表
+                      db.run('DROP TABLE meetings', () => {
+                        db.run('ALTER TABLE meetings_new RENAME TO meetings', () => {
+                          console.log('meetings表结构更新完成');
+                        });
+                      });
+                    }
+                  });
+                } else {
+                  // 没有旧的community_id字段，直接替换
+                  db.run('DROP TABLE meetings', () => {
+                    db.run('ALTER TABLE meetings_new RENAME TO meetings', () => {
+                      console.log('meetings表结构更新完成');
+                    });
+                  });
+                }
+              });
+            }
+          }
+        });
 
         // 插入默认管理员账户
         db.get("SELECT id FROM admins WHERE username = 'admin'", (err2, row) => {
