@@ -43,6 +43,15 @@ const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const Statistics = () => {
+  // 类型标签定义，需要在组件开头定义以避免初始化顺序问题
+  const typeLabels = {
+    group: '组',
+    pai: '排',
+    community: '小区',
+    region: '大区',
+    church: '召会',
+  };
+
   const [loading, setLoading] = useState(false);
   const [statistics, setStatistics] = useState([]);
   const [dateRange, setDateRange] = useState([dayjs().subtract(30, 'day'), dayjs()]);
@@ -159,14 +168,6 @@ const Statistics = () => {
 
 
   const colors = ['#1890ff', '#52c41a', '#722ed1', '#fa8c16', '#eb2f96', '#13c2c2', '#f5222d', '#fa541c'];
-
-  const typeLabels = {
-    group: '组',
-    pai: '排',
-    community: '小区',
-    region: '大区',
-    church: '召会',
-  };
 
   const columns = [
     {
