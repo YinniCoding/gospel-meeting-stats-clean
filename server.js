@@ -534,14 +534,14 @@ app.post('/api/meetings', authenticateToken, upload.fields([
 ]), (req, res) => {
   const { project, community_type, meeting_date, meeting_time, location, participants_count, notes } = req.body;
 
-  if (!project || !community_type || !meeting_date || !meeting_time) {
+  if (!project || !community_type || !meeting_date || !location) {
     return res.status(400).json({ error: '必填字段不能为空' });
   }
 
   db.run(`
     INSERT INTO meetings (project, community_type, meeting_date, meeting_time, location, participants_count, notes, created_by)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `, [project, community_type, meeting_date, meeting_time, (location || ''), participants_count || 0, notes, req.user.id],
+  `, [project, community_type, meeting_date, meeting_time || '', location, participants_count || 0, notes, req.user.id],
   function(err) {
     if (err) {
       return res.status(500).json({ error: '数据库错误' });
@@ -598,7 +598,7 @@ app.put('/api/meetings/:id', authenticateToken, upload.fields([
   const participants_count = req.body.participants_count ? parseInt(req.body.participants_count, 10) : 0;
   const notes = req.body.notes || '';
 
-  if (!project || !community_type || !meeting_date || !meeting_time) {
+  if (!project || !community_type || !meeting_date || !location) {
     return res.status(400).json({ error: '必填字段不能为空' });
   }
 
@@ -607,7 +607,7 @@ app.put('/api/meetings/:id', authenticateToken, upload.fields([
     SET project = ?, community_type = ?, meeting_date = ?, meeting_time = ?, location = ?, 
         participants_count = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `, [project, community_type, meeting_date, meeting_time, (location || ''), participants_count || 0, notes, id],
+  `, [project, community_type, meeting_date, meeting_time || '', location, participants_count || 0, notes, id],
   function(err) {
     if (err) {
       return res.status(500).json({ error: '数据库错误' });

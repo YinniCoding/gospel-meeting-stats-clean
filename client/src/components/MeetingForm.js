@@ -224,7 +224,6 @@ const MeetingForm = () => {
               <Form.Item
                 name="meeting_time"
                 label="聚会时间"
-                rules={[{ required: true, message: '请选择聚会时间！' }]}
               >
                 <Select
                   placeholder="选择聚会时间"
@@ -264,7 +263,7 @@ const MeetingForm = () => {
               <Form.Item
                 name="location"
                 label="聚会地点"
-                rules={[]}
+                rules={[{ required: true, message: '请输入聚会地点！' }]}
               >
                 <Input
                   placeholder="输入聚会地点"

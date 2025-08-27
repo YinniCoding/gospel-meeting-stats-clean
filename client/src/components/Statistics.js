@@ -150,7 +150,7 @@ const Statistics = () => {
 
   const chartData = statistics
     .filter(item => 
-      (selectedCommunity === 'all' || item.community_name === selectedCommunity) &&
+      (selectedCommunity === 'all' || item.project === selectedCommunity) &&
       (selectedType === 'all' || item.community_type === selectedType)
     )
     .map(item => ({
@@ -253,22 +253,18 @@ const Statistics = () => {
             <Option value="region">大区</Option>
             <Option value="church">召会</Option>
           </Select>
-          <span>具体单位：</span>
+          <span>具体项目：</span>
           <Select
             value={selectedCommunity}
             onChange={handleCommunityChange}
             style={{ width: 200 }}
-            placeholder="选择具体单位"
+            placeholder="选择具体项目"
             allowClear
           >
             <Option value="all">全部</Option>
-            {communities
-              .filter(community => selectedType === 'all' || community.type === selectedType)
-              .map(community => (
-                <Option key={community.id} value={community.name}>
-                  {community.name}
-                </Option>
-              ))}
+            {Array.from({ length: 10 }, (_, i) => `${i + 1}`).map(p => (
+              <Option key={p} value={p}>{p}</Option>
+            ))}
           </Select>
           <Button 
             type="primary" 
