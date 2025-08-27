@@ -154,21 +154,28 @@ const MeetingList = () => {
       title: '项目',
       dataIndex: 'project',
       key: 'project',
-      width: 100,
+      width: 60,
     },
     {
       title: '类型',
       dataIndex: 'community_type',
       key: 'community_type',
-      width: 100,
+      width: 80,
       render: (type) => <Tag color="#1890ff">{typeLabels[type]}</Tag>
+    },
+    {
+      title: '参与人数',
+      dataIndex: 'participants_count',
+      key: 'participants_count',
+      width: 90,
+      render: (text) => <span style={{ fontWeight: 'bold', color: '#1890ff' }}>{text}</span>
     },
     {
       title: '聚会日期',
       dataIndex: 'meeting_date',
       key: 'meeting_date',
       width: 100,
-      render: (text) => dayjs(text).format('YYYY-MM-DD')
+      render: (text) => dayjs(text).format('MM-DD')
     },
     {
       title: '聚会时间',
@@ -180,40 +187,33 @@ const MeetingList = () => {
       title: '地点',
       dataIndex: 'location',
       key: 'location',
-      width: 150,
+      width: 120,
       ellipsis: true
-    },
-    {
-      title: '参与人数',
-      dataIndex: 'participants_count',
-      key: 'participants_count',
-      width: 100,
-      render: (text) => <span style={{ fontWeight: 'bold', color: '#1890ff' }}>{text}</span>
     },
     {
       title: '备注',
       dataIndex: 'notes',
       key: 'notes',
-      width: 200,
+      width: 150,
       ellipsis: true
     },
     {
       title: '创建人',
       dataIndex: 'created_by_name',
       key: 'created_by_name',
-      width: 100
+      width: 80
     },
     {
       title: '创建时间',
       dataIndex: 'created_at',
       key: 'created_at',
-      width: 120,
+      width: 100,
       render: (text) => dayjs(text).format('MM-DD HH:mm')
     },
     {
       title: '操作',
       key: 'action',
-      width: 120,
+      width: 100,
       fixed: 'right',
       render: (_, record) => (
         <Space size="small">
